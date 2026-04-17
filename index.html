@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#ffffff">
+<title>MacroLog</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: #f5f5f3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; color: #1a1a1a; }
+  body { max-width: 520px; margin: 0 auto; padding: 12px; padding-bottom: 40px; }
+  .card { background: #fff; border: 0.5px solid rgba(0,0,0,0.12); border-radius: 12px; padding: 16px 20px; margin-bottom: 12px; }
+  .metric { background: #f5f5f3; border-radius: 8px; padding: 12px; text-align: center; }
+  .metric-label { font-size: 12px; color: #666; margin-bottom: 4px; }
+  .metric-value { font-size: 18px; font-weight: 500; }
+  .metric-sub { font-size: 11px; color: #999; margin-top: 2px; }
+  .tabbar { display: flex; gap: 4px; background: #f5f5f3; border-radius: 8px; padding: 4px; margin-bottom: 12px; position: sticky; top: 0; z-index: 10; }
+  .tab { flex: 1; padding: 10px 4px; text-align: center; font-size: 13px; border-radius: 6px; cursor: pointer; color: #666; }
+  .tab.active { background: #fff; color: #1a1a1a; font-weight: 500; }
+  .btn { padding: 10px 14px; border-radius: 8px; border: 0.5px solid rgba(0,0,0,0.2); background: transparent; font-size: 14px; cursor: pointer; color: #1a1a1a; font-family: inherit; }
+  .btn-primary { background: #1a1a1a; color: #fff; border: none; }
+  .btn-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .input { width: 100%; padding: 10px 12px; border: 0.5px solid rgba(0,0,0,0.15); border-radius: 6px; background: #fff; color: #1a1a1a; font-size: 14px; font-family: inherit; }
+  .label { font-size: 12px; color: #666; margin-bottom: 4px; display: block; }
+  .row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .ring-wrap { display: flex; justify-content: center; margin: 8px 0 16px; }
+  .food-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 0.5px solid rgba(0,0,0,0.08); }
+  .food-item:last-child { border-bottom: none; }
+  .food-name { font-size: 14px; font-weight: 500; }
+  .food-meta { font-size: 12px; color: #666; margin-top: 2px; }
+  .macro-pills { display: flex; gap: 4px; margin-top: 4px; }
+  .pill { font-size: 10px; padding: 2px 6px; border-radius: 10px; }
+  .pill-p { background: #E6F1FB; color: #0C447C; }
+  .pill-c { background: #FAEEDA; color: #633806; }
+  .pill-f { background: #EEEDFE; color: #3C3489; }
+  .delete { background: none; border: none; color: #999; cursor: pointer; font-size: 20px; padding: 4px 8px; }
+  .modal-bg { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.45); display: flex; align-items: flex-end; justify-content: center; padding: 16px; z-index: 100; }
+  .modal { background: #fff; border-radius: 12px; padding: 20px; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; }
+  .progress-bar { height: 8px; background: #f5f5f3; border-radius: 4px; overflow: hidden; margin-top: 6px; }
+  .progress-fill { height: 100%; transition: width 0.3s; }
+  .water-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .glass { width: 30px; height: 38px; border: 1.5px solid rgba(0,0,0,0.2); border-radius: 0 0 6px 6px; border-top: none; cursor: pointer; }
+  .glass.filled { background: #B5D4F4; border-color: #378ADD; }
+  .lang-toggle { display: flex; gap: 4px; margin-bottom: 12px; justify-content: flex-end; }
+  .lang-btn { padding: 4px 10px; font-size: 12px; border-radius: 4px; border: 0.5px solid rgba(0,0,0,0.15); background: transparent; cursor: pointer; color: #666; font-family: inherit; }
+  .lang-btn.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .confidence { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-left: 8px; }
+  .empty { text-align: center; color: #999; font-size: 13px; padding: 24px 0; }
+  h2 { font-size: 20px; font-weight: 500; margin: 0 0 12px; }
+  h3 { font-size: 15px; font-weight: 500; margin: 0 0 8px; }
+  @media (prefers-color-scheme: dark) {
+    html, body { background: #0f0f0f; color: #f0f0f0; }
+    .card { background: #1a1a1a; border-color: rgba(255,255,255,0.1); }
+    .metric, .tabbar, .progress-bar { background: #0f0f0f; }
+    .tab { color: #999; }
+    .tab.active { background: #1a1a1a; color: #f0f0f0; }
+    .input { background: #1a1a1a; color: #f0f0f0; border-color: rgba(255,255,255,0.15); }
+    .btn { color: #f0f0f0; border-color: rgba(255,255,255,0.2); }
+    .btn-primary { background: #f0f0f0; color: #1a1a1a; }
+    .modal { background: #1a1a1a; }
+    .food-item { border-bottom-color: rgba(255,255,255,0.08); }
+    .lang-btn { color: #999; border-color: rgba(255,255,255,0.15); }
+    .lang-btn.active { background: #f0f0f0; color: #1a1a1a; }
+    .label, .food-meta, .metric-label { color: #999; }
+    .empty, .delete, .metric-sub { color: #777; }
+  }
+</style>
+</head>
+<body>
+
+<div class="lang-toggle">
+  <button class="lang-btn active" data-lang="no" onclick="setLang('no')">Norsk</button>
+  <button class="lang-btn" data-lang="en" onclick="setLang('en')">English</button>
+</div>
+
+<div id="onboard" class="card" style="display:none;">
+  <h2 data-i18n="welcome">Velkommen til MacroLog</h2>
+  <p style="font-size: 13px; color: #666; margin: 0 0 16px;" data-i18n="welcomeSub">Sett opp målene dine for å komme i gang.</p>
+  <div class="row">
+    <div style="flex:1;"><label class="label" data-i18n="age">Alder</label><input type="number" class="input" id="ob-age" value="17"/></div>
+    <div style="flex:1;"><label class="label" data-i18n="sex">Kjønn</label><select class="input" id="ob-sex"><option value="m" data-i18n="male">Mann</option><option value="f" data-i18n="female">Kvinne</option></select></div>
+  </div>
+  <div class="row">
+    <div style="flex:1;"><label class="label" data-i18n="height">Høyde (cm)</label><input type="number" class="input" id="ob-height" value="178"/></div>
+    <div style="flex:1;"><label class="label" data-i18n="weight">Vekt (kg)</label><input type="number" class="input" id="ob-weight" value="72"/></div>
+  </div>
+  <div class="row">
+    <div style="flex:1;"><label class="label" data-i18n="target">Målvekt (kg)</label><input type="number" class="input" id="ob-target" value="75"/></div>
+    <div style="flex:1;"><label class="label" data-i18n="weeks">Uker</label><input type="number" class="input" id="ob-weeks" value="12"/></div>
+  </div>
+  <div style="margin-bottom:12px;"><label class="label" data-i18n="activity">Aktivitetsnivå</label>
+    <select class="input" id="ob-activity">
+      <option value="1.2" data-i18n="sed">Stillesittende</option>
+      <option value="1.375" data-i18n="light">Lett aktiv</option>
+      <option value="1.55" selected data-i18n="mod">Moderat aktiv (trening 3-5 ganger/uke)</option>
+      <option value="1.725" data-i18n="very">Veldig aktiv</option>
+    </select>
+  </div>
+  <button class="btn btn-primary" style="width:100%;" onclick="finishOnboard()" data-i18n="start">Start</button>
+</div>
+
+<div id="main" style="display:none;">
+  <div class="tabbar">
+    <div class="tab active" data-view="home" onclick="switchView('home')" data-i18n="home">I dag</div>
+    <div class="tab" data-view="log" onclick="switchView('log')" data-i18n="log">Logg</div>
+    <div class="tab" data-view="stats" onclick="switchView('stats')" data-i18n="stats">Statistikk</div>
+    <div class="tab" data-view="profile" onclick="switchView('profile')" data-i18n="profile">Profil</div>
+  </div>
+
+  <div id="view-home">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:baseline;">
+        <h2 data-i18n="today">I dag</h2>
+        <span id="date-label" style="font-size:12px; color:#666;"></span>
+      </div>
+      <div class="ring-wrap">
+        <svg width="180" height="180" viewBox="0 0 160 160">
+          <circle cx="80" cy="80" r="68" fill="none" stroke="#eee" stroke-width="12"/>
+          <circle id="cal-ring" cx="80" cy="80" r="68" fill="none" stroke="#378ADD" stroke-width="12" stroke-linecap="round" stroke-dasharray="427" stroke-dashoffset="427" transform="rotate(-90 80 80)"/>
+          <text x="80" y="75" text-anchor="middle" font-size="26" font-weight="500" fill="currentColor" id="cal-consumed">0</text>
+          <text x="80" y="95" text-anchor="middle" font-size="12" fill="#666" id="cal-goal-text">/ 0 kcal</text>
+          <text x="80" y="112" text-anchor="middle" font-size="11" fill="#999" id="cal-remaining">0 igjen</text>
+        </svg>
+      </div>
+      <div class="btn-row">
+        <div><div class="metric-label" data-i18n="protein">Protein</div><div class="progress-bar"><div class="progress-fill" id="bar-p" style="background:#378ADD; width:0%"></div></div><div class="metric-sub" id="txt-p">0 / 0 g</div></div>
+        <div><div class="metric-label" data-i18n="carbs">Karbo</div><div class="progress-bar"><div class="progress-fill" id="bar-c" style="background:#EF9F27; width:0%"></div></div><div class="metric-sub" id="txt-c">0 / 0 g</div></div>
+        <div><div class="metric-label" data-i18n="fat">Fett</div><div class="progress-bar"><div class="progress-fill" id="bar-f" style="background:#7F77DD; width:0%"></div></div><div class="metric-sub" id="txt-f">0 / 0 g</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 data-i18n="addFood">Legg til mat</h3>
+      <div class="btn-row" style="margin-top:8px;">
+        <button class="btn" onclick="openPhotoModal()" data-i18n="photo">📷 Bilde</button>
+        <button class="btn" onclick="openBarcodeModal()" data-i18n="barcode">▦ Strekkode</button>
+        <button class="btn" onclick="openManualModal()" data-i18n="manual">✎ Manuelt</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 data-i18n="water">Vann</h3>
+        <span style="font-size:12px; color:#666;" id="water-count">0 / 8</span>
+      </div>
+      <div class="water-row" id="water-glasses"></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 data-i18n="exercise">Trening</h3>
+        <button class="btn" style="padding:4px 10px; font-size:12px;" onclick="openExerciseModal()" data-i18n="add">+ Legg til</button>
+      </div>
+      <div id="exercise-list"></div>
+    </div>
+
+    <div class="card">
+      <h3 data-i18n="meals">Dagens måltider</h3>
+      <div id="meals-list"><div class="empty" data-i18n="noMeals">Ingen måltider logget ennå</div></div>
+    </div>
+  </div>
+
+  <div id="view-log" style="display:none;">
+    <div class="card"><h2 data-i18n="history">Historikk</h2><div id="history-list"></div></div>
+  </div>
+
+  <div id="view-stats" style="display:none;">
+    <div class="card">
+      <h2 data-i18n="stats7">Siste 7 dager</h2>
+      <svg id="weekly-chart" width="100%" height="180" viewBox="0 0 420 180"></svg>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px;">
+        <div class="metric"><div class="metric-label" data-i18n="avgCal">Snitt kcal/dag</div><div class="metric-value" id="stat-avg-cal">0</div></div>
+        <div class="metric"><div class="metric-label" data-i18n="streak">Streak</div><div class="metric-value" id="stat-streak">0</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-profile" style="display:none;">
+    <div class="card">
+      <h2 data-i18n="profile">Profil</h2>
+      <div id="profile-info"></div>
+      <button class="btn" style="width:100%; margin-top:12px;" onclick="editProfile()" data-i18n="editGoals">Endre mål</button>
+      <button class="btn" style="width:100%; margin-top:8px;" onclick="resetAll()" data-i18n="reset">Tilbakestill alt</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-root"></div>
+
+<script>
+const i18n = {
+  no: { welcome:'Velkommen til MacroLog', welcomeSub:'Sett opp målene dine for å komme i gang.', age:'Alder', sex:'Kjønn', male:'Mann', female:'Kvinne', height:'Høyde (cm)', weight:'Vekt (kg)', target:'Målvekt (kg)', weeks:'Uker', activity:'Aktivitetsnivå', sed:'Stillesittende', light:'Lett aktiv', mod:'Moderat aktiv (trening 3-5 ganger/uke)', very:'Veldig aktiv', start:'Start', home:'I dag', log:'Logg', stats:'Statistikk', profile:'Profil', today:'I dag', protein:'Protein', carbs:'Karbo', fat:'Fett', addFood:'Legg til mat', photo:'📷 Bilde', barcode:'▦ Strekkode', manual:'✎ Manuelt', water:'Vann', exercise:'Trening', add:'+ Legg til', meals:'Dagens måltider', noMeals:'Ingen måltider logget ennå', history:'Historikk', stats7:'Siste 7 dager', avgCal:'Snitt kcal/dag', streak:'Streak', days:'dager', editGoals:'Endre mål', reset:'Tilbakestill alt', remaining:'igjen', over:'over', foodName:'Matnavn', portion:'Porsjon (g)', calories:'Kalorier', save:'Lagre', cancel:'Avbryt', aiGuess:'AI gjettet:', editHint:'Trykk for å endre hvis AI tok feil', analyzing:'Analyserer bilde…', scanHint:'Hold strekkoden foran kameraet', exerciseType:'Type', duration:'Varighet (min)', boxing:'Boksing', running:'Løping', strength:'Styrke', cardio:'Kondis', other:'Annet', noHistory:'Ingen historikk ennå' },
+  en: { welcome:'Welcome to MacroLog', welcomeSub:'Set up your goals to get started.', age:'Age', sex:'Sex', male:'Male', female:'Female', height:'Height (cm)', weight:'Weight (kg)', target:'Target weight (kg)', weeks:'Weeks', activity:'Activity level', sed:'Sedentary', light:'Lightly active', mod:'Moderately active (3-5x/week)', very:'Very active', start:'Start', home:'Today', log:'Log', stats:'Stats', profile:'Profile', today:'Today', protein:'Protein', carbs:'Carbs', fat:'Fat', addFood:'Add food', photo:'📷 Photo', barcode:'▦ Barcode', manual:'✎ Manual', water:'Water', exercise:'Exercise', add:'+ Add', meals:"Today's meals", noMeals:'No meals logged yet', history:'History', stats7:'Last 7 days', avgCal:'Avg kcal/day', streak:'Streak', days:'days', editGoals:'Edit goals', reset:'Reset everything', remaining:'left', over:'over', foodName:'Food name', portion:'Portion (g)', calories:'Calories', save:'Save', cancel:'Cancel', aiGuess:'AI guessed:', editHint:'Tap to edit if AI got it wrong', analyzing:'Analyzing image…', scanHint:'Hold the barcode in front of the camera', exerciseType:'Type', duration:'Duration (min)', boxing:'Boxing', running:'Running', strength:'Strength', cardio:'Cardio', other:'Other', noHistory:'No history yet' }
+};
+let lang = 'no';
+let state = loadState();
+function loadState(){ try{ const r=localStorage.getItem('macrolog_v1'); if(r)return JSON.parse(r);}catch(e){} return {profile:null,days:{},history:[]}; }
+function save(){ try{ localStorage.setItem('macrolog_v1', JSON.stringify(state)); }catch(e){} }
+const sampleFoods = { no:[{name:'Havregrøt med bær',portion:300,cal:310,p:10,c:52,f:6,conf:'high'},{name:'Kyllingfilet med ris',portion:400,cal:520,p:45,c:60,f:8,conf:'high'},{name:'Laks med poteter',portion:380,cal:480,p:35,c:35,f:22,conf:'medium'},{name:'Brødskive med brunost',portion:60,cal:220,p:7,c:28,f:9,conf:'high'},{name:'Pasta bolognese',portion:450,cal:620,p:28,c:78,f:18,conf:'high'},{name:'Taco',portion:350,cal:550,p:25,c:55,f:22,conf:'medium'},{name:'Eple',portion:180,cal:95,p:0.5,c:25,f:0.3,conf:'high'},{name:'Banan',portion:120,cal:105,p:1.3,c:27,f:0.4,conf:'high'}], en:[{name:'Oatmeal with berries',portion:300,cal:310,p:10,c:52,f:6,conf:'high'},{name:'Chicken breast with rice',portion:400,cal:520,p:45,c:60,f:8,conf:'high'},{name:'Salmon with potatoes',portion:380,cal:480,p:35,c:35,f:22,conf:'medium'},{name:'Toast with cheese',portion:60,cal:220,p:7,c:28,f:9,conf:'high'},{name:'Pasta bolognese',portion:450,cal:620,p:28,c:78,f:18,conf:'high'},{name:'Tacos',portion:350,cal:550,p:25,c:55,f:22,conf:'medium'},{name:'Apple',portion:180,cal:95,p:0.5,c:25,f:0.3,conf:'high'},{name:'Banana',portion:120,cal:105,p:1.3,c:27,f:0.4,conf:'high'}] };
+const sampleBarcodes = { no:[{name:'TINE Skyr Naturell 150g',portion:150,cal:90,p:17,c:5,f:0.3},{name:'Grandiosa Original 1/2',portion:290,cal:660,p:25,c:75,f:26}], en:[{name:'Greek Yogurt 150g',portion:150,cal:90,p:17,c:5,f:0.3},{name:'Frozen Pizza 1/2',portion:290,cal:660,p:25,c:75,f:26}] };
+function t(k){return i18n[lang][k]||k;}
+function setLang(l){lang=l;document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.dataset.lang===l));applyI18n();render();}
+function applyI18n(){document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;if(i18n[lang][k])el.textContent=i18n[lang][k];});}
+function todayKey(){return new Date().toISOString().slice(0,10);}
+function getDay(k){if(!state.days[k])state.days[k]={meals:[],exercises:[],water:0};return state.days[k];}
+function calcBMR(p){if(p.sex==='m')return 10*p.weight+6.25*p.height-5*p.age+5;return 10*p.weight+6.25*p.height-5*p.age-161;}
+function calcGoals(p){const bmr=calcBMR(p);const tdee=bmr*p.activity;const diff=p.target-p.weight;const daily=(diff*7700)/(p.weeks*7);const adjust=Math.max(-1000,Math.min(1000,daily));const goalCal=Math.round(tdee+adjust);return{cal:goalCal,p:Math.round(goalCal*0.30/4),c:Math.round(goalCal*0.40/4),f:Math.round(goalCal*0.30/9),tdee:Math.round(tdee)};}
+function finishOnboard(){const p={age:+document.getElementById('ob-age').value,sex:document.getElementById('ob-sex').value,height:+document.getElementById('ob-height').value,weight:+document.getElementById('ob-weight').value,target:+document.getElementById('ob-target').value,weeks:+document.getElementById('ob-weeks').value,activity:+document.getElementById('ob-activity').value};p.goals=calcGoals(p);state.profile=p;save();render();}
+function switchView(v){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));['home','log','stats','profile'].forEach(k=>{document.getElementById('view-'+k).style.display=k===v?'':'none';});if(v==='stats')renderStats();if(v==='log')renderHistory();if(v==='profile')renderProfile();}
+function esc(s){return String(s).replace(/[<>&"']/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));}
+function render(){applyI18n();if(!state.profile){document.getElementById('onboard').style.display='';document.getElementById('main').style.display='none';return;}document.getElementById('onboard').style.display='none';document.getElementById('main').style.display='';const day=getDay(todayKey());const g=state.profile.goals;let cal=0,p=0,c=0,f=0;day.meals.forEach(m=>{cal+=m.cal;p+=m.p;c+=m.c;f+=m.f;});let burned=0;day.exercises.forEach(e=>burned+=e.burned);const adjCalGoal=g.cal+burned;document.getElementById('date-label').textContent=new Date().toLocaleDateString(lang==='no'?'no-NO':'en-US',{weekday:'long',day:'numeric',month:'short'});document.getElementById('cal-consumed').textContent=Math.round(cal);document.getElementById('cal-goal-text').textContent='/ '+adjCalGoal+' kcal';const remain=adjCalGoal-cal;document.getElementById('cal-remaining').textContent=remain>=0?Math.round(remain)+' '+t('remaining'):Math.round(-remain)+' '+t('over');const pct=Math.min(1,cal/adjCalGoal);document.getElementById('cal-ring').setAttribute('stroke-dashoffset',427-427*pct);document.getElementById('bar-p').style.width=Math.min(100,(p/g.p)*100)+'%';document.getElementById('bar-c').style.width=Math.min(100,(c/g.c)*100)+'%';document.getElementById('bar-f').style.width=Math.min(100,(f/g.f)*100)+'%';document.getElementById('txt-p').textContent=Math.round(p)+' / '+g.p+' g';document.getElementById('txt-c').textContent=Math.round(c)+' / '+g.c+' g';document.getElementById('txt-f').textContent=Math.round(f)+' / '+g.f+' g';const gw=document.getElementById('water-glasses');gw.innerHTML='';for(let i=0;i<8;i++){const g2=document.createElement('div');g2.className='glass'+(i<day.water?' filled':'');g2.onclick=()=>{day.water=(i<day.water)?i:i+1;save();render();};gw.appendChild(g2);}document.getElementById('water-count').textContent=day.water+' / 8';const exL=document.getElementById('exercise-list');exL.innerHTML=day.exercises.length===0?'<div class="empty" style="padding:12px 0;">—</div>':day.exercises.map((e,i)=>`<div class="food-item"><div><div class="food-name">${esc(e.name)}</div><div class="food-meta">${e.duration} min · +${Math.round(e.burned)} kcal</div></div><button class="delete" onclick="delExercise(${i})">×</button></div>`).join('');const meals=document.getElementById('meals-list');meals.innerHTML=day.meals.length===0?'<div class="empty">'+t('noMeals')+'</div>':day.meals.map((m,i)=>`<div class="food-item"><div style="flex:1;"><div class="food-name">${esc(m.name)}</div><div class="food-meta">${m.portion}g · ${Math.round(m.cal)} kcal</div><div class="macro-pills"><span class="pill pill-p">P ${Math.round(m.p)}g</span><span class="pill pill-c">C ${Math.round(m.c)}g</span><span class="pill pill-f">F ${Math.round(m.f)}g</span></div></div><button class="delete" onclick="delMeal(${i})">×</button></div>`).join('');}
+function delMeal(i){const day=getDay(todayKey());day.meals.splice(i,1);save();render();}
+function delExercise(i){const day=getDay(todayKey());day.exercises.splice(i,1);save();render();}
+function modal(html){document.getElementById('modal-root').innerHTML='<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal">'+html+'</div></div>';}
+function closeModal(){document.getElementById('modal-root').innerHTML='';}
+function confColor(c){return c==='high'?'#C0DD97':c==='medium'?'#FAC775':'#F7C1C1';}
+function openManualModal(prefill){const f=prefill||{name:'',portion:100,cal:0,p:0,c:0,f:0};const title=prefill&&prefill._ai?`<div style="font-size:12px;color:#666;margin-bottom:4px;">${t('aiGuess')}</div><h3>${esc(f.name)}<span class="confidence" style="background:${confColor(f._ai)}">${f._ai}</span></h3><p style="font-size:12px;color:#666;margin-bottom:12px;">${t('editHint')}</p>`:`<h3>${t('manual')}</h3>`;modal(`${title}<label class="label">${t('foodName')}</label><input class="input" id="m-name" value="${esc(f.name)}"/><div class="row" style="margin-top:8px;"><div style="flex:1;"><label class="label">${t('portion')}</label><input class="input" id="m-portion" type="number" value="${f.portion}"/></div><div style="flex:1;"><label class="label">${t('calories')}</label><input class="input" id="m-cal" type="number" value="${f.cal}"/></div></div><div class="row"><div style="flex:1;"><label class="label">${t('protein')}</label><input class="input" id="m-p" type="number" step="0.1" value="${f.p}"/></div><div style="flex:1;"><label class="label">${t('carbs')}</label><input class="input" id="m-c" type="number" step="0.1" value="${f.c}"/></div><div style="flex:1;"><label class="label">${t('fat')}</label><input class="input" id="m-f" type="number" step="0.1" value="${f.f}"/></div></div><div class="row" style="margin-top:12px;"><button class="btn" style="flex:1;" onclick="closeModal()">${t('cancel')}</button><button class="btn btn-primary" style="flex:1;" onclick="saveMeal()">${t('save')}</button></div>`);}
+function saveMeal(){const m={name:document.getElementById('m-name').value||'?',portion:+document.getElementById('m-portion').value||0,cal:+document.getElementById('m-cal').value||0,p:+document.getElementById('m-p').value||0,c:+document.getElementById('m-c').value||0,f:+document.getElementById('m-f').value||0,time:Date.now()};getDay(todayKey()).meals.push(m);save();closeModal();render();}
+function openPhotoModal(){modal(`<h3>${t('photo')}</h3><div style="background:#f5f5f3;border-radius:8px;padding:40px;text-align:center;margin:12px 0;"><div style="font-size:40px;margin-bottom:8px;">📷</div><div style="font-size:13px;color:#666;">${t('analyzing')}</div></div><button class="btn" style="width:100%;" onclick="closeModal()">${t('cancel')}</button>`);setTimeout(()=>{const foods=sampleFoods[lang];const g={...foods[Math.floor(Math.random()*foods.length)]};g._ai=g.conf;closeModal();openManualModal(g);},1400);}
+function openBarcodeModal(){modal(`<h3>${t('barcode')}</h3><div style="background:#f5f5f3;border-radius:8px;padding:40px;text-align:center;margin:12px 0;"><div style="font-size:40px;margin-bottom:8px;">▦</div><div style="font-size:13px;color:#666;">${t('scanHint')}</div></div><button class="btn" style="width:100%;" onclick="closeModal()">${t('cancel')}</button>`);setTimeout(()=>{const items=sampleBarcodes[lang];const it={...items[Math.floor(Math.random()*items.length)]};closeModal();openManualModal(it);},1200);}
+function openExerciseModal(){modal(`<h3>${t('exercise')}</h3><label class="label">${t('exerciseType')}</label><select class="input" id="ex-type"><option value="boxing|11">${t('boxing')}</option><option value="running|10">${t('running')}</option><option value="strength|6">${t('strength')}</option><option value="cardio|8">${t('cardio')}</option><option value="other|5">${t('other')}</option></select><div class="row" style="margin-top:8px;"><div style="flex:1;"><label class="label">${t('duration')}</label><input class="input" id="ex-dur" type="number" value="60"/></div></div><div class="row" style="margin-top:12px;"><button class="btn" style="flex:1;" onclick="closeModal()">${t('cancel')}</button><button class="btn btn-primary" style="flex:1;" onclick="saveExercise()">${t('save')}</button></div>`);}
+function saveExercise(){const[type,met]=document.getElementById('ex-type').value.split('|');const dur=+document.getElementById('ex-dur').value||0;const weight=state.profile.weight;const burned=(+met)*weight*(dur/60);const nm={boxing:t('boxing'),running:t('running'),strength:t('strength'),cardio:t('cardio'),other:t('other')};getDay(todayKey()).exercises.push({name:nm[type],duration:dur,burned});save();closeModal();render();}
+function renderHistory(){const h=document.getElementById('history-list');const days=Object.keys(state.days).sort().reverse();if(days.length===0){h.innerHTML='<div class="empty">'+t('noHistory')+'</div>';return;}h.innerHTML=days.map(d=>{const day=state.days[d];let cal=0;day.meals.forEach(m=>cal+=m.cal);const dt=new Date(d).toLocaleDateString(lang==='no'?'no-NO':'en-US',{weekday:'short',day:'numeric',month:'short'});const mh=day.meals.map(m=>`<div style="font-size:13px;color:#666;padding:4px 0;">· ${esc(m.name)} — ${Math.round(m.cal)} kcal</div>`).join('');return`<div style="margin-bottom:16px;"><div style="font-weight:500;font-size:14px;">${dt} <span style="color:#666;font-weight:400;font-size:12px;">(${Math.round(cal)} kcal)</span></div>${mh||'<div class="empty" style="padding:4px 0;">—</div>'}</div>`;}).join('');}
+function renderStats(){const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=d.toISOString().slice(0,10);const day=state.days[k]||{meals:[]};let cal=0;day.meals.forEach(m=>cal+=m.cal);days.push({label:d.toLocaleDateString(lang==='no'?'no-NO':'en-US',{weekday:'short'}),cal});}const max=Math.max(state.profile.goals.cal*1.2,...days.map(d=>d.cal));const barW=40,gap=16,startX=30;const goalY=140-(state.profile.goals.cal/max)*120;let html=`<line x1="20" y1="${goalY}" x2="400" y2="${goalY}" stroke="#378ADD" stroke-width="1" stroke-dasharray="4 3"/><text x="400" y="${goalY-4}" text-anchor="end" font-size="10" fill="#378ADD">${state.profile.goals.cal} kcal</text>`;days.forEach((d,i)=>{const h=(d.cal/max)*120;const x=startX+i*(barW+gap);html+=`<rect x="${x}" y="${140-h}" width="${barW}" height="${h}" fill="#B5D4F4" rx="3"/><text x="${x+barW/2}" y="158" text-anchor="middle" font-size="11" fill="#666">${d.label}</text>`;if(d.cal>0)html+=`<text x="${x+barW/2}" y="${140-h-4}" text-anchor="middle" font-size="10" fill="currentColor">${Math.round(d.cal)}</text>`;});document.getElementById('weekly-chart').innerHTML=html;const logged=days.filter(d=>d.cal>0);const avg=logged.length?Math.round(logged.reduce((s,d)=>s+d.cal,0)/logged.length):0;document.getElementById('stat-avg-cal').textContent=avg;let streak=0;for(let i=days.length-1;i>=0;i--){if(days[i].cal>0)streak++;else break;}document.getElementById('stat-streak').textContent=streak+' '+t('days');}
+function renderProfile(){const p=state.profile;const g=p.goals;document.getElementById('profile-info').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="metric"><div class="metric-label">${t('calories')}</div><div class="metric-value">${g.cal}</div><div class="metric-sub">kcal/${lang==='no'?'dag':'day'}</div></div><div class="metric"><div class="metric-label">TDEE</div><div class="metric-value">${g.tdee}</div><div class="metric-sub">kcal</div></div><div class="metric"><div class="metric-label">${t('protein')}</div><div class="metric-value">${g.p}g</div></div><div class="metric"><div class="metric-label">${t('weight')}</div><div class="metric-value">${p.weight}→${p.target}kg</div><div class="metric-sub">${p.weeks} ${lang==='no'?'uker':'weeks'}</div></div></div>`;}
+function editProfile(){state.profile=null;save();render();}
+function resetAll(){if(confirm(lang==='no'?'Slette alle data?':'Delete all data?')){state={profile:null,days:{},history:[]};save();render();}}
+render();
+</script>
+</body>
+</html>
