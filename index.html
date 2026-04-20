@@ -21,7 +21,6 @@
   .tab.active { background: #fff; color: #1a1a1a; font-weight: 500; }
   .btn { padding: 10px 14px; border-radius: 8px; border: 0.5px solid rgba(0,0,0,0.2); background: transparent; font-size: 14px; cursor: pointer; color: #1a1a1a; font-family: inherit; }
   .btn-primary { background: #1a1a1a; color: #fff; border: none; }
-  .btn-danger { background: #E24B4A; color: #fff; border: none; }
   .btn-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
   .input { width: 100%; padding: 10px 12px; border: 0.5px solid rgba(0,0,0,0.15); border-radius: 6px; background: #fff; color: #1a1a1a; font-size: 14px; font-family: inherit; }
   .label { font-size: 12px; color: #666; margin-bottom: 4px; display: block; }
@@ -65,12 +64,25 @@
   .status-msg { font-size: 13px; color: #666; text-align: center; padding: 8px 0; }
   .status-msg.error { color: #E24B4A; }
   .status-msg.success { color: #1D9E75; }
+  .day-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .day-nav-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #666; padding: 4px 14px; border-radius: 6px; }
+  .day-nav-btn:hover { background: #f5f5f3; }
+  .day-nav-btn:disabled { opacity: 0.2; cursor: default; }
+  .day-nav-btn:disabled:hover { background: none; }
+  .day-nav-center { text-align: center; }
+  .day-nav-date { font-size: 16px; font-weight: 500; }
+  .day-nav-sub { font-size: 11px; color: #666; margin-top: 2px; }
+  .search-result { padding: 10px 12px; border-bottom: 0.5px solid rgba(0,0,0,0.08); cursor: pointer; }
+  .search-result:hover { background: #f5f5f3; }
+  .search-result:last-child { border-bottom: none; }
+  .search-result-name { font-size: 14px; font-weight: 500; }
+  .search-result-meta { font-size: 11px; color: #666; margin-top: 2px; }
+  .search-results-box { max-height: 200px; overflow-y: auto; border: 0.5px solid rgba(0,0,0,0.1); border-radius: 6px; margin-top: 8px; }
   @media (prefers-color-scheme: dark) {
     html, body { background: #0f0f0f; color: #f0f0f0; }
     .card { background: #1a1a1a; border-color: rgba(255,255,255,0.1); }
     .metric, .tabbar, .progress-bar { background: #0f0f0f; }
-    .tab { color: #999; }
-    .tab.active { background: #1a1a1a; color: #f0f0f0; }
+    .tab { color: #999; } .tab.active { background: #1a1a1a; color: #f0f0f0; }
     .input { background: #1a1a1a; color: #f0f0f0; border-color: rgba(255,255,255,0.15); }
     .btn { color: #f0f0f0; border-color: rgba(255,255,255,0.2); }
     .btn-primary { background: #f0f0f0; color: #1a1a1a; }
@@ -80,55 +92,35 @@
     .lang-btn.active { background: #f0f0f0; color: #1a1a1a; }
     .label, .food-meta, .metric-label { color: #999; }
     .empty, .delete, .metric-sub { color: #777; }
-    .api-setup { background: #2a2210; }
-    .api-setup p { color: #FAC775; }
+    .api-setup { background: #2a2210; } .api-setup p { color: #FAC775; }
+    .day-nav-btn { color: #999; } .day-nav-btn:hover { background: #222; }
+    .day-nav-sub { color: #999; }
+    .search-result:hover { background: #222; }
+    .search-results-box { border-color: rgba(255,255,255,0.1); }
   }
 </style>
 </head>
 <body>
-
 <div class="lang-toggle">
   <button class="lang-btn active" data-lang="no" onclick="setLang('no')">Norsk</button>
   <button class="lang-btn" data-lang="en" onclick="setLang('en')">English</button>
 </div>
-
 <div id="api-banner" class="card" style="display:none;">
   <div class="api-setup">
     <p data-i18n="apiExplain">For at bildegjenkjenning skal fungere trenger du en OpenAI API-nøkkel. Strekkodeskanneren fungerer uten.</p>
-    <div class="api-key-row">
-      <input type="password" class="input" id="api-key-input" placeholder="sk-..."/>
-      <button class="btn btn-primary" style="white-space:nowrap; font-size:12px;" onclick="saveApiKey()">Lagre</button>
-    </div>
+    <div class="api-key-row"><input type="password" class="input" id="api-key-input" placeholder="sk-..."/><button class="btn btn-primary" style="white-space:nowrap; font-size:12px;" onclick="saveApiKey()">Lagre</button></div>
     <p style="font-size:11px; margin-top:6px; opacity:0.7;" data-i18n="apiNote">Nøkkelen lagres kun lokalt i denne nettleseren.</p>
   </div>
 </div>
-
 <div id="onboard" class="card" style="display:none;">
   <h2 data-i18n="welcome">Velkommen til MacroLog</h2>
-  <p style="font-size: 13px; color: #666; margin: 0 0 16px;" data-i18n="welcomeSub">Sett opp målene dine for å komme i gang.</p>
-  <div class="row">
-    <div style="flex:1;"><label class="label" data-i18n="age">Alder</label><input type="number" class="input" id="ob-age" value="17"/></div>
-    <div style="flex:1;"><label class="label" data-i18n="sex">Kjønn</label><select class="input" id="ob-sex"><option value="m" data-i18n="male">Mann</option><option value="f" data-i18n="female">Kvinne</option></select></div>
-  </div>
-  <div class="row">
-    <div style="flex:1;"><label class="label" data-i18n="height">Høyde (cm)</label><input type="number" class="input" id="ob-height" value="178"/></div>
-    <div style="flex:1;"><label class="label" data-i18n="weight">Vekt (kg)</label><input type="number" class="input" id="ob-weight" value="72"/></div>
-  </div>
-  <div class="row">
-    <div style="flex:1;"><label class="label" data-i18n="target">Målvekt (kg)</label><input type="number" class="input" id="ob-target" value="75"/></div>
-    <div style="flex:1;"><label class="label" data-i18n="weeks">Uker</label><input type="number" class="input" id="ob-weeks" value="12"/></div>
-  </div>
-  <div style="margin-bottom:12px;"><label class="label" data-i18n="activity">Aktivitetsnivå</label>
-    <select class="input" id="ob-activity">
-      <option value="1.2" data-i18n="sed">Stillesittende</option>
-      <option value="1.375" data-i18n="light">Lett aktiv</option>
-      <option value="1.55" selected data-i18n="mod">Moderat aktiv (trening 3-5 ganger/uke)</option>
-      <option value="1.725" data-i18n="very">Veldig aktiv</option>
-    </select>
-  </div>
+  <p style="font-size:13px; color:#666; margin:0 0 16px;" data-i18n="welcomeSub">Sett opp målene dine for å komme i gang.</p>
+  <div class="row"><div style="flex:1;"><label class="label" data-i18n="age">Alder</label><input type="number" class="input" id="ob-age" value="17"/></div><div style="flex:1;"><label class="label" data-i18n="sex">Kjønn</label><select class="input" id="ob-sex"><option value="m" data-i18n="male">Mann</option><option value="f" data-i18n="female">Kvinne</option></select></div></div>
+  <div class="row"><div style="flex:1;"><label class="label" data-i18n="height">Høyde (cm)</label><input type="number" class="input" id="ob-height" value="178"/></div><div style="flex:1;"><label class="label" data-i18n="weight">Vekt (kg)</label><input type="number" class="input" id="ob-weight" value="72"/></div></div>
+  <div class="row"><div style="flex:1;"><label class="label" data-i18n="target">Målvekt (kg)</label><input type="number" class="input" id="ob-target" value="75"/></div><div style="flex:1;"><label class="label" data-i18n="weeks">Uker</label><input type="number" class="input" id="ob-weeks" value="12"/></div></div>
+  <div style="margin-bottom:12px;"><label class="label" data-i18n="activity">Aktivitetsnivå</label><select class="input" id="ob-activity"><option value="1.2" data-i18n="sed">Stillesittende</option><option value="1.375" data-i18n="light">Lett aktiv</option><option value="1.55" selected data-i18n="mod">Moderat aktiv (trening 3-5 ganger/uke)</option><option value="1.725" data-i18n="very">Veldig aktiv</option></select></div>
   <button class="btn btn-primary" style="width:100%;" onclick="finishOnboard()" data-i18n="start">Start</button>
 </div>
-
 <div id="main" style="display:none;">
   <div class="tabbar">
     <div class="tab active" data-view="home" onclick="switchView('home')" data-i18n="home">I dag</div>
@@ -136,12 +128,12 @@
     <div class="tab" data-view="stats" onclick="switchView('stats')" data-i18n="stats">Statistikk</div>
     <div class="tab" data-view="profile" onclick="switchView('profile')" data-i18n="profile">Profil</div>
   </div>
-
   <div id="view-home">
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:baseline;">
-        <h2 data-i18n="today">I dag</h2>
-        <span id="date-label" style="font-size:12px; color:#666;"></span>
+      <div class="day-nav">
+        <button class="day-nav-btn" id="day-prev" onclick="changeDay(-1)">&lsaquo;</button>
+        <div class="day-nav-center"><div class="day-nav-date" id="day-nav-date"></div><div class="day-nav-sub" id="day-nav-sub"></div></div>
+        <button class="day-nav-btn" id="day-next" onclick="changeDay(1)">&rsaquo;</button>
       </div>
       <div class="ring-wrap">
         <svg width="180" height="180" viewBox="0 0 160 160">
@@ -153,12 +145,11 @@
         </svg>
       </div>
       <div class="btn-row">
-        <div><div class="metric-label" data-i18n="protein">Protein</div><div class="progress-bar"><div class="progress-fill" id="bar-p" style="background:#378ADD; width:0%"></div></div><div class="metric-sub" id="txt-p">0 / 0 g</div></div>
-        <div><div class="metric-label" data-i18n="carbs">Karbo</div><div class="progress-bar"><div class="progress-fill" id="bar-c" style="background:#EF9F27; width:0%"></div></div><div class="metric-sub" id="txt-c">0 / 0 g</div></div>
-        <div><div class="metric-label" data-i18n="fat">Fett</div><div class="progress-bar"><div class="progress-fill" id="bar-f" style="background:#7F77DD; width:0%"></div></div><div class="metric-sub" id="txt-f">0 / 0 g</div></div>
+        <div><div class="metric-label" data-i18n="protein">Protein</div><div class="progress-bar"><div class="progress-fill" id="bar-p" style="background:#378ADD;width:0%"></div></div><div class="metric-sub" id="txt-p">0/0g</div></div>
+        <div><div class="metric-label" data-i18n="carbs">Karbo</div><div class="progress-bar"><div class="progress-fill" id="bar-c" style="background:#EF9F27;width:0%"></div></div><div class="metric-sub" id="txt-c">0/0g</div></div>
+        <div><div class="metric-label" data-i18n="fat">Fett</div><div class="progress-bar"><div class="progress-fill" id="bar-f" style="background:#7F77DD;width:0%"></div></div><div class="metric-sub" id="txt-f">0/0g</div></div>
       </div>
     </div>
-
     <div class="card">
       <h3 data-i18n="addFood">Legg til mat</h3>
       <div class="btn-row" style="margin-top:8px;">
@@ -167,444 +158,129 @@
         <button class="btn" onclick="openManualModal()">✎ <span data-i18n="manual2">Manuelt</span></button>
       </div>
     </div>
-
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
         <h3 data-i18n="water">Vann</h3>
-        <span style="font-size:12px; color:#666;" id="water-count">0 / 8</span>
+        <span style="font-size:12px;color:#666;" id="water-count">0 / 8</span>
       </div>
+      <div style="font-size:11px;color:#999;margin-bottom:2px;" id="water-dl-label">1 glass = 2.5 dl</div>
       <div class="water-row" id="water-glasses"></div>
+      <div style="font-size:12px;color:#666;margin-top:6px;" id="water-total">0 / 2.0 L</div>
     </div>
-
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
         <h3 data-i18n="exercise">Trening</h3>
-        <button class="btn" style="padding:4px 10px; font-size:12px;" onclick="openExerciseModal()" data-i18n="add">+ Legg til</button>
+        <button class="btn" style="padding:4px 10px;font-size:12px;" onclick="openExerciseModal()" data-i18n="add">+ Legg til</button>
       </div>
       <div id="exercise-list"></div>
     </div>
-
     <div class="card">
       <h3 data-i18n="meals">Dagens måltider</h3>
       <div id="meals-list"><div class="empty" data-i18n="noMeals">Ingen måltider logget ennå</div></div>
     </div>
   </div>
-
-  <div id="view-log" style="display:none;">
-    <div class="card"><h2 data-i18n="history">Historikk</h2><div id="history-list"></div></div>
-  </div>
-
-  <div id="view-stats" style="display:none;">
-    <div class="card">
-      <h2 data-i18n="stats7">Siste 7 dager</h2>
-      <svg id="weekly-chart" width="100%" height="180" viewBox="0 0 420 180"></svg>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px;">
-        <div class="metric"><div class="metric-label" data-i18n="avgCal">Snitt kcal/dag</div><div class="metric-value" id="stat-avg-cal">0</div></div>
-        <div class="metric"><div class="metric-label" data-i18n="streak">Streak</div><div class="metric-value" id="stat-streak">0</div></div>
-      </div>
-    </div>
-  </div>
-
-  <div id="view-profile" style="display:none;">
-    <div class="card">
-      <h2 data-i18n="profile">Profil</h2>
-      <div id="profile-info"></div>
-      <button class="btn" style="width:100%; margin-top:12px;" onclick="editProfile()" data-i18n="editGoals">Endre mål</button>
-      <div style="margin-top:8px;">
-        <label class="label">OpenAI API-nøkkel</label>
-        <div class="api-key-row">
-          <input type="password" class="input" id="api-key-profile" style="font-size:12px;" placeholder="sk-..."/>
-          <button class="btn" style="white-space:nowrap; font-size:12px;" onclick="saveApiKeyProfile()">Lagre</button>
-        </div>
-        <p style="font-size:11px; color:#666; margin:4px 0 0;" id="api-status"></p>
-      </div>
-      <button class="btn" style="width:100%; margin-top:12px;" onclick="resetAll()" data-i18n="reset">Tilbakestill alt</button>
-    </div>
-  </div>
+  <div id="view-log" style="display:none;"><div class="card"><h2 data-i18n="history">Historikk</h2><div id="history-list"></div></div></div>
+  <div id="view-stats" style="display:none;"><div class="card"><h2 data-i18n="stats7">Siste 7 dager</h2><svg id="weekly-chart" width="100%" height="180" viewBox="0 0 420 180"></svg><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;"><div class="metric"><div class="metric-label" data-i18n="avgCal">Snitt kcal/dag</div><div class="metric-value" id="stat-avg-cal">0</div></div><div class="metric"><div class="metric-label" data-i18n="streak">Streak</div><div class="metric-value" id="stat-streak">0</div></div></div></div></div>
+  <div id="view-profile" style="display:none;"><div class="card"><h2 data-i18n="profile">Profil</h2><div id="profile-info"></div><button class="btn" style="width:100%;margin-top:12px;" onclick="editProfile()" data-i18n="editGoals">Endre mål</button><div style="margin-top:8px;"><label class="label">OpenAI API-nøkkel</label><div class="api-key-row"><input type="password" class="input" id="api-key-profile" style="font-size:12px;" placeholder="sk-..."/><button class="btn" style="white-space:nowrap;font-size:12px;" onclick="saveApiKeyProfile()">Lagre</button></div><p style="font-size:11px;color:#666;margin:4px 0 0;" id="api-status"></p></div><button class="btn" style="width:100%;margin-top:12px;" onclick="resetAll()" data-i18n="reset">Tilbakestill alt</button></div></div>
 </div>
-
 <div id="modal-root"></div>
 <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(this)"/>
 <input type="file" id="gallery-input" accept="image/*" style="display:none" onchange="handlePhoto(this)"/>
-
 <script>
-const i18n = {
-  no: { welcome:'Velkommen til MacroLog', welcomeSub:'Sett opp målene dine for å komme i gang.', age:'Alder', sex:'Kjønn', male:'Mann', female:'Kvinne', height:'Høyde (cm)', weight:'Vekt (kg)', target:'Målvekt (kg)', weeks:'Uker', activity:'Aktivitetsnivå', sed:'Stillesittende', light:'Lett aktiv', mod:'Moderat aktiv (trening 3-5 ganger/uke)', very:'Veldig aktiv', start:'Start', home:'I dag', log:'Logg', stats:'Statistikk', profile:'Profil', today:'I dag', protein:'Protein', carbs:'Karbo', fat:'Fett', addFood:'Legg til mat', photo2:'Bilde', barcode2:'Strekkode', manual2:'Manuelt', water:'Vann', exercise:'Trening', add:'+ Legg til', meals:'Dagens måltider', noMeals:'Ingen måltider logget ennå', history:'Historikk', stats7:'Siste 7 dager', avgCal:'Snitt kcal/dag', streak:'Streak', days:'dager', editGoals:'Endre mål', reset:'Tilbakestill alt', remaining:'igjen', over:'over', foodName:'Matnavn', portion:'Porsjon (g)', calories:'Kalorier', save:'Lagre', cancel:'Avbryt', aiGuess:'AI gjettet:', editHint:'Du kan endre alt før du lagrer', analyzing:'Analyserer bildet med AI…', scanHint:'Vent mens vi skanner…', exerciseType:'Type', duration:'Varighet (min)', boxing:'Boksing', running:'Løping', strength:'Styrke', cardio:'Kondis', other:'Annet', noHistory:'Ingen historikk ennå', takePhoto:'Ta bilde', choosePhoto:'Velg fra galleri', orText:'eller', noApiKey:'Du trenger en OpenAI API-nøkkel for bildegjenkjenning. Legg den inn under Profil.', scanningBarcode:'Skanner etter strekkode…', barcodeFound:'Fant produkt! Henter info…', barcodeNotFound:'Fant ikke produktet i databasen. Prøv å legge det inn manuelt.', barcodeError:'Kunne ikke lese strekkoden. Prøv igjen.', stopScan:'Stopp skanning', apiExplain:'For at bildegjenkjenning skal fungere trenger du en OpenAI API-nøkkel. Strekkodeskanneren fungerer uten.', apiNote:'Nøkkelen lagres kun lokalt i denne nettleseren.', apiSaved:'Nøkkel lagret!', apiRemoved:'Nøkkel fjernet', enterBarcode:'Eller skriv inn strekkoden:', lookupBarcode:'Søk', searchProduct:'Søk etter produkt' },
-  en: { welcome:'Welcome to MacroLog', welcomeSub:'Set up your goals to get started.', age:'Age', sex:'Sex', male:'Male', female:'Female', height:'Height (cm)', weight:'Weight (kg)', target:'Target weight (kg)', weeks:'Weeks', activity:'Activity level', sed:'Sedentary', light:'Lightly active', mod:'Moderately active (3-5x/week)', very:'Very active', start:'Start', home:'Today', log:'Log', stats:'Stats', profile:'Profile', today:'Today', protein:'Protein', carbs:'Carbs', fat:'Fat', addFood:'Add food', photo2:'Photo', barcode2:'Barcode', manual2:'Manual', water:'Water', exercise:'Exercise', add:'+ Add', meals:"Today's meals", noMeals:'No meals logged yet', history:'History', stats7:'Last 7 days', avgCal:'Avg kcal/day', streak:'Streak', days:'days', editGoals:'Edit goals', reset:'Reset everything', remaining:'left', over:'over', foodName:'Food name', portion:'Portion (g)', calories:'Calories', save:'Save', cancel:'Cancel', aiGuess:'AI guessed:', editHint:'You can edit everything before saving', analyzing:'Analyzing image with AI…', scanHint:'Scanning…', exerciseType:'Type', duration:'Duration (min)', boxing:'Boxing', running:'Running', strength:'Strength', cardio:'Cardio', other:'Other', noHistory:'No history yet', takePhoto:'Take photo', choosePhoto:'Choose from gallery', orText:'or', noApiKey:'You need an OpenAI API key for image recognition. Add it under Profile.', scanningBarcode:'Scanning for barcode…', barcodeFound:'Product found! Fetching info…', barcodeNotFound:'Product not found in database. Try adding it manually.', barcodeError:'Could not read barcode. Try again.', stopScan:'Stop scanning', apiExplain:'Image recognition requires an OpenAI API key. The barcode scanner works without one.', apiNote:'The key is stored only in this browser.', apiSaved:'Key saved!', apiRemoved:'Key removed', enterBarcode:'Or enter the barcode:', lookupBarcode:'Look up', searchProduct:'Search for product' }
-};
-let lang = 'no';
-let state = loadState();
-
-function loadState(){ try{ const r=localStorage.getItem('macrolog_v2'); if(r)return JSON.parse(r); } catch(e){} return {profile:null,days:{},apiKey:''}; }
-function save(){ try{ localStorage.setItem('macrolog_v2', JSON.stringify(state)); } catch(e){} }
+const i18n={no:{welcome:'Velkommen til MacroLog',welcomeSub:'Sett opp målene dine for å komme i gang.',age:'Alder',sex:'Kjønn',male:'Mann',female:'Kvinne',height:'Høyde (cm)',weight:'Vekt (kg)',target:'Målvekt (kg)',weeks:'Uker',activity:'Aktivitetsnivå',sed:'Stillesittende',light:'Lett aktiv',mod:'Moderat aktiv (trening 3-5 ganger/uke)',very:'Veldig aktiv',start:'Start',home:'I dag',log:'Logg',stats:'Statistikk',profile:'Profil',today:'I dag',protein:'Protein',carbs:'Karbo',fat:'Fett',addFood:'Legg til mat',photo2:'Bilde',barcode2:'Strekkode',manual2:'Manuelt',water:'Vann',exercise:'Trening',add:'+ Legg til',meals:'Dagens måltider',noMeals:'Ingen måltider logget ennå',history:'Historikk',stats7:'Siste 7 dager',avgCal:'Snitt kcal/dag',streak:'Streak',days:'dager',editGoals:'Endre mål',reset:'Tilbakestill alt',remaining:'igjen',over:'over',foodName:'Matnavn',portion:'Porsjon (g)',calories:'Kalorier',save:'Lagre',cancel:'Avbryt',aiGuess:'AI gjettet:',editHint:'Du kan endre alt før du lagrer',analyzing:'Analyserer bildet med AI…',exerciseType:'Type',duration:'Varighet (min)',boxing:'Boksing',running:'Løping',strength:'Styrke',cardio:'Kondis',other:'Annet',noHistory:'Ingen historikk ennå',takePhoto:'Ta bilde',choosePhoto:'Velg fra galleri',noApiKey:'Du trenger en OpenAI API-nøkkel for bildegjenkjenning. Legg den inn under Profil.',scanningBarcode:'Skanner etter strekkode…',barcodeFound:'Fant produkt! Henter info…',barcodeNotFound:'Fant ikke produktet. Prøv å søke etter navn.',barcodeError:'Kunne ikke lese strekkoden.',apiExplain:'For at bildegjenkjenning skal fungere trenger du en OpenAI API-nøkkel. Strekkodeskanneren fungerer uten.',apiNote:'Nøkkelen lagres kun lokalt i denne nettleseren.',apiSaved:'Nøkkel lagret!',apiRemoved:'Nøkkel fjernet',enterBarcode:'Skriv inn strekkode:',lookupBarcode:'Søk',searchProduct:'Søk etter matvare',searchPlaceholder:'F.eks. "Grandiosa", "melk", "havregryn"…',searching:'Søker…',noResults:'Ingen resultater. Prøv et annet søkeord.',todayLabel:'I dag',yesterdayLabel:'I går',perGlass:'1 glass = 2.5 dl'},en:{welcome:'Welcome to MacroLog',welcomeSub:'Set up your goals to get started.',age:'Age',sex:'Sex',male:'Male',female:'Female',height:'Height (cm)',weight:'Weight (kg)',target:'Target weight (kg)',weeks:'Weeks',activity:'Activity level',sed:'Sedentary',light:'Lightly active',mod:'Moderately active (3-5x/week)',very:'Very active',start:'Start',home:'Today',log:'Log',stats:'Stats',profile:'Profile',today:'Today',protein:'Protein',carbs:'Carbs',fat:'Fat',addFood:'Add food',photo2:'Photo',barcode2:'Barcode',manual2:'Manual',water:'Water',exercise:'Exercise',add:'+ Add',meals:"Today's meals",noMeals:'No meals logged yet',history:'History',stats7:'Last 7 days',avgCal:'Avg kcal/day',streak:'Streak',days:'days',editGoals:'Edit goals',reset:'Reset everything',remaining:'left',over:'over',foodName:'Food name',portion:'Portion (g)',calories:'Calories',save:'Save',cancel:'Cancel',aiGuess:'AI guessed:',editHint:'You can edit everything before saving',analyzing:'Analyzing image with AI…',exerciseType:'Type',duration:'Duration (min)',boxing:'Boxing',running:'Running',strength:'Strength',cardio:'Cardio',other:'Other',noHistory:'No history yet',takePhoto:'Take photo',choosePhoto:'Choose from gallery',noApiKey:'You need an OpenAI API key for image recognition. Add it under Profile.',scanningBarcode:'Scanning for barcode…',barcodeFound:'Product found!',barcodeNotFound:'Product not found. Try searching by name.',barcodeError:'Could not read barcode.',apiExplain:'Image recognition requires an OpenAI API key. The barcode scanner works without one.',apiNote:'The key is stored only in this browser.',apiSaved:'Key saved!',apiRemoved:'Key removed',enterBarcode:'Enter barcode:',lookupBarcode:'Look up',searchProduct:'Search for food',searchPlaceholder:'E.g. "pizza", "milk", "oatmeal"…',searching:'Searching…',noResults:'No results. Try a different term.',todayLabel:'Today',yesterdayLabel:'Yesterday',perGlass:'1 glass = 2.5 dl'}};
+let lang='no',state=loadState(),viewingDate=todayKey();
+function loadState(){try{const r=localStorage.getItem('macrolog_v3');if(r)return JSON.parse(r);}catch(e){}return{profile:null,days:{},apiKey:''};}
+function save(){try{localStorage.setItem('macrolog_v3',JSON.stringify(state));}catch(e){}}
 function t(k){return i18n[lang][k]||k;}
 function setLang(l){lang=l;document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.dataset.lang===l));applyI18n();render();}
 function applyI18n(){document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;if(i18n[lang][k])el.textContent=i18n[lang][k];});}
 function todayKey(){return new Date().toISOString().slice(0,10);}
 function getDay(k){if(!state.days[k])state.days[k]={meals:[],exercises:[],water:0};return state.days[k];}
-function calcBMR(p){if(p.sex==='m')return 10*p.weight+6.25*p.height-5*p.age+5;return 10*p.weight+6.25*p.height-5*p.age-161;}
-function calcGoals(p){const bmr=calcBMR(p);const tdee=bmr*p.activity;const diff=p.target-p.weight;const daily=(diff*7700)/(p.weeks*7);const adjust=Math.max(-1000,Math.min(1000,daily));const goalCal=Math.round(tdee+adjust);return{cal:goalCal,p:Math.round(goalCal*0.30/4),c:Math.round(goalCal*0.40/4),f:Math.round(goalCal*0.30/9),tdee:Math.round(tdee)};}
+function calcBMR(p){return p.sex==='m'?10*p.weight+6.25*p.height-5*p.age+5:10*p.weight+6.25*p.height-5*p.age-161;}
+function calcGoals(p){const bmr=calcBMR(p),tdee=bmr*p.activity,diff=p.target-p.weight,daily=(diff*7700)/(p.weeks*7),adjust=Math.max(-1000,Math.min(1000,daily)),goalCal=Math.round(tdee+adjust);return{cal:goalCal,p:Math.round(goalCal*0.30/4),c:Math.round(goalCal*0.40/4),f:Math.round(goalCal*0.30/9),tdee:Math.round(tdee)};}
 function esc(s){return String(s).replace(/[<>&"']/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));}
-
-function saveApiKey(){
-  const k=document.getElementById('api-key-input').value.trim();
-  state.apiKey=k; save();
-  document.getElementById('api-banner').style.display='none';
-  render();
-}
-function saveApiKeyProfile(){
-  const k=document.getElementById('api-key-profile').value.trim();
-  state.apiKey=k; save();
-  const s=document.getElementById('api-status');
-  s.textContent=k?t('apiSaved'):t('apiRemoved');
-  s.style.color=k?'#1D9E75':'#666';
-  setTimeout(()=>s.textContent='',2000);
-}
-
-function finishOnboard(){
-  const p={age:+document.getElementById('ob-age').value,sex:document.getElementById('ob-sex').value,height:+document.getElementById('ob-height').value,weight:+document.getElementById('ob-weight').value,target:+document.getElementById('ob-target').value,weeks:+document.getElementById('ob-weeks').value,activity:+document.getElementById('ob-activity').value};
-  p.goals=calcGoals(p);state.profile=p;save();render();
-}
+function changeDay(offset){const d=new Date(viewingDate+'T12:00:00');d.setDate(d.getDate()+offset);const nk=d.toISOString().slice(0,10);if(nk>todayKey())return;viewingDate=nk;render();}
+function formatDayLabel(dk){const today=todayKey(),y=new Date();y.setDate(y.getDate()-1);if(dk===today)return t('todayLabel');if(dk===y.toISOString().slice(0,10))return t('yesterdayLabel');return new Date(dk+'T12:00:00').toLocaleDateString(lang==='no'?'no-NO':'en-US',{weekday:'long',day:'numeric',month:'short'});}
+function formatDaySub(dk){return new Date(dk+'T12:00:00').toLocaleDateString(lang==='no'?'no-NO':'en-US',{day:'numeric',month:'long',year:'numeric'});}
+function saveApiKey(){state.apiKey=document.getElementById('api-key-input').value.trim();save();document.getElementById('api-banner').style.display='none';render();}
+function saveApiKeyProfile(){const k=document.getElementById('api-key-profile').value.trim();state.apiKey=k;save();const s=document.getElementById('api-status');s.textContent=k?t('apiSaved'):t('apiRemoved');s.style.color=k?'#1D9E75':'#666';setTimeout(()=>s.textContent='',2000);}
+function finishOnboard(){const p={age:+document.getElementById('ob-age').value,sex:document.getElementById('ob-sex').value,height:+document.getElementById('ob-height').value,weight:+document.getElementById('ob-weight').value,target:+document.getElementById('ob-target').value,weeks:+document.getElementById('ob-weeks').value,activity:+document.getElementById('ob-activity').value};p.goals=calcGoals(p);state.profile=p;save();render();}
 function switchView(v){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));['home','log','stats','profile'].forEach(k=>{document.getElementById('view-'+k).style.display=k===v?'':'none';});if(v==='stats')renderStats();if(v==='log')renderHistory();if(v==='profile')renderProfile();}
-
 function render(){
   applyI18n();
-  if(!state.profile){
-    document.getElementById('onboard').style.display='';
-    document.getElementById('main').style.display='none';
-    document.getElementById('api-banner').style.display=!state.apiKey?'':'none';
-    return;
-  }
-  document.getElementById('onboard').style.display='none';
-  document.getElementById('main').style.display='';
-  document.getElementById('api-banner').style.display='none';
-
-  const day=getDay(todayKey());const g=state.profile.goals;
-  let cal=0,p=0,c=0,f=0;
-  day.meals.forEach(m=>{cal+=m.cal;p+=m.p;c+=m.c;f+=m.f;});
-  let burned=0;day.exercises.forEach(e=>burned+=e.burned);
-  const adjCalGoal=g.cal+burned;
-
-  document.getElementById('date-label').textContent=new Date().toLocaleDateString(lang==='no'?'no-NO':'en-US',{weekday:'long',day:'numeric',month:'short'});
+  if(!state.profile){document.getElementById('onboard').style.display='';document.getElementById('main').style.display='none';document.getElementById('api-banner').style.display=!state.apiKey?'':'none';return;}
+  document.getElementById('onboard').style.display='none';document.getElementById('main').style.display='';document.getElementById('api-banner').style.display='none';
+  const day=getDay(viewingDate),g=state.profile.goals;let cal=0,p=0,c=0,f=0;day.meals.forEach(m=>{cal+=m.cal;p+=m.p;c+=m.c;f+=m.f;});let burned=0;day.exercises.forEach(e=>burned+=e.burned);const adj=g.cal+burned;
+  document.getElementById('day-nav-date').textContent=formatDayLabel(viewingDate);
+  document.getElementById('day-nav-sub').textContent=formatDaySub(viewingDate);
+  document.getElementById('day-next').disabled=(viewingDate>=todayKey());
   document.getElementById('cal-consumed').textContent=Math.round(cal);
-  document.getElementById('cal-goal-text').textContent='/ '+adjCalGoal+' kcal';
-  const remain=adjCalGoal-cal;
-  document.getElementById('cal-remaining').textContent=remain>=0?Math.round(remain)+' '+t('remaining'):Math.round(-remain)+' '+t('over');
-  const pct=Math.min(1,cal/adjCalGoal);
-  document.getElementById('cal-ring').setAttribute('stroke-dashoffset',427-427*pct);
-  document.getElementById('bar-p').style.width=Math.min(100,(p/g.p)*100)+'%';
-  document.getElementById('bar-c').style.width=Math.min(100,(c/g.c)*100)+'%';
-  document.getElementById('bar-f').style.width=Math.min(100,(f/g.f)*100)+'%';
-  document.getElementById('txt-p').textContent=Math.round(p)+' / '+g.p+' g';
-  document.getElementById('txt-c').textContent=Math.round(c)+' / '+g.c+' g';
-  document.getElementById('txt-f').textContent=Math.round(f)+' / '+g.f+' g';
-
+  document.getElementById('cal-goal-text').textContent='/ '+adj+' kcal';
+  const rem=adj-cal;document.getElementById('cal-remaining').textContent=rem>=0?Math.round(rem)+' '+t('remaining'):Math.round(-rem)+' '+t('over');
+  document.getElementById('cal-ring').setAttribute('stroke-dashoffset',427-427*Math.min(1,cal/adj));
+  document.getElementById('bar-p').style.width=Math.min(100,(p/g.p)*100)+'%';document.getElementById('bar-c').style.width=Math.min(100,(c/g.c)*100)+'%';document.getElementById('bar-f').style.width=Math.min(100,(f/g.f)*100)+'%';
+  document.getElementById('txt-p').textContent=Math.round(p)+' / '+g.p+' g';document.getElementById('txt-c').textContent=Math.round(c)+' / '+g.c+' g';document.getElementById('txt-f').textContent=Math.round(f)+' / '+g.f+' g';
   const gw=document.getElementById('water-glasses');gw.innerHTML='';
-  for(let i=0;i<8;i++){const g2=document.createElement('div');g2.className='glass'+(i<day.water?' filled':'');g2.onclick=()=>{day.water=(i<day.water)?i:i+1;save();render();};gw.appendChild(g2);}
+  for(let i=0;i<8;i++){const gl=document.createElement('div');gl.className='glass'+(i<day.water?' filled':'');gl.onclick=()=>{day.water=(i<day.water)?i:i+1;save();render();};gw.appendChild(gl);}
   document.getElementById('water-count').textContent=day.water+' / 8';
-
-  const exL=document.getElementById('exercise-list');
-  exL.innerHTML=day.exercises.length===0?'<div class="empty" style="padding:12px 0;">—</div>':day.exercises.map((e,i)=>`<div class="food-item"><div><div class="food-name">${esc(e.name)}</div><div class="food-meta">${e.duration} min · +${Math.round(e.burned)} kcal</div></div><button class="delete" onclick="delExercise(${i})">×</button></div>`).join('');
-
-  const meals=document.getElementById('meals-list');
-  meals.innerHTML=day.meals.length===0?'<div class="empty">'+t('noMeals')+'</div>':day.meals.map((m,i)=>`<div class="food-item"><div style="flex:1;"><div class="food-name">${esc(m.name)}</div><div class="food-meta">${m.portion}g · ${Math.round(m.cal)} kcal</div><div class="macro-pills"><span class="pill pill-p">P ${Math.round(m.p)}g</span><span class="pill pill-c">C ${Math.round(m.c)}g</span><span class="pill pill-f">F ${Math.round(m.f)}g</span></div></div><button class="delete" onclick="delMeal(${i})">×</button></div>`).join('');
+  document.getElementById('water-dl-label').textContent=t('perGlass');
+  document.getElementById('water-total').textContent=(day.water*2.5/10).toFixed(1)+' / 2.0 L';
+  document.getElementById('exercise-list').innerHTML=day.exercises.length===0?'<div class="empty" style="padding:12px 0;">—</div>':day.exercises.map((e,i)=>`<div class="food-item"><div><div class="food-name">${esc(e.name)}</div><div class="food-meta">${e.duration} min · +${Math.round(e.burned)} kcal</div></div><button class="delete" onclick="delExercise(${i})">×</button></div>`).join('');
+  document.getElementById('meals-list').innerHTML=day.meals.length===0?'<div class="empty">'+t('noMeals')+'</div>':day.meals.map((m,i)=>`<div class="food-item"><div style="flex:1;"><div class="food-name">${esc(m.name)}</div><div class="food-meta">${m.portion}g · ${Math.round(m.cal)} kcal</div><div class="macro-pills"><span class="pill pill-p">P ${Math.round(m.p)}g</span><span class="pill pill-c">C ${Math.round(m.c)}g</span><span class="pill pill-f">F ${Math.round(m.f)}g</span></div></div><button class="delete" onclick="delMeal(${i})">×</button></div>`).join('');
 }
-
-function delMeal(i){getDay(todayKey()).meals.splice(i,1);save();render();}
-function delExercise(i){getDay(todayKey()).exercises.splice(i,1);save();render();}
-
+function delMeal(i){getDay(viewingDate).meals.splice(i,1);save();render();}
+function delExercise(i){getDay(viewingDate).exercises.splice(i,1);save();render();}
 function modal(html){document.getElementById('modal-root').innerHTML='<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal">'+html+'</div></div>';}
-function closeModal(){
-  stopBarcodeScanner();
-  document.getElementById('modal-root').innerHTML='';
-}
-
+function closeModal(){stopBarcodeScanner();document.getElementById('modal-root').innerHTML='';}
 function confColor(c){return c==='high'?'#C0DD97':c==='medium'?'#FAC775':'#F7C1C1';}
-
-function openManualModal(prefill){
-  const f=prefill||{name:'',portion:100,cal:0,p:0,c:0,f:0};
-  const isAI=prefill&&prefill._ai;
-  const title=isAI?`<div style="font-size:12px;color:#666;margin-bottom:4px;">${t('aiGuess')}</div><h3>${esc(f.name)}<span class="confidence" style="background:${confColor(f._ai)}">${f._ai}</span></h3><p style="font-size:12px;color:#666;margin-bottom:12px;">${t('editHint')}</p>`:`<h3>${prefill&&prefill._barcode?t('barcodeFound'):t('manual2')}</h3>`;
-  modal(`${title}
-    <label class="label">${t('foodName')}</label><input class="input" id="m-name" value="${esc(f.name)}"/>
-    <div class="row" style="margin-top:8px;">
-      <div style="flex:1;"><label class="label">${t('portion')}</label><input class="input" id="m-portion" type="number" value="${f.portion}"/></div>
-      <div style="flex:1;"><label class="label">${t('calories')}</label><input class="input" id="m-cal" type="number" value="${Math.round(f.cal)}"/></div>
-    </div>
-    <div class="row">
-      <div style="flex:1;"><label class="label">${t('protein')}</label><input class="input" id="m-p" type="number" step="0.1" value="${Math.round(f.p*10)/10}"/></div>
-      <div style="flex:1;"><label class="label">${t('carbs')}</label><input class="input" id="m-c" type="number" step="0.1" value="${Math.round(f.c*10)/10}"/></div>
-      <div style="flex:1;"><label class="label">${t('fat')}</label><input class="input" id="m-f" type="number" step="0.1" value="${Math.round(f.f*10)/10}"/></div>
-    </div>
-    <div class="row" style="margin-top:12px;">
-      <button class="btn" style="flex:1;" onclick="closeModal()">${t('cancel')}</button>
-      <button class="btn btn-primary" style="flex:1;" onclick="saveMeal()">${t('save')}</button>
-    </div>`);
+function openManualModal(pf){
+  const f=pf||{name:'',portion:100,cal:0,p:0,c:0,f:0};const isAI=pf&&pf._ai;
+  const title=isAI?`<div style="font-size:12px;color:#666;margin-bottom:4px;">${t('aiGuess')}</div><h3>${esc(f.name)}<span class="confidence" style="background:${confColor(f._ai)}">${f._ai}</span></h3><p style="font-size:12px;color:#666;margin-bottom:12px;">${t('editHint')}</p>`:`<h3>${pf&&pf._barcode?t('barcodeFound'):t('manual2')}</h3>`;
+  modal(`${title}<label class="label">${t('foodName')}</label><input class="input" id="m-name" value="${esc(f.name)}"/><div class="row" style="margin-top:8px;"><div style="flex:1;"><label class="label">${t('portion')}</label><input class="input" id="m-portion" type="number" value="${f.portion}"/></div><div style="flex:1;"><label class="label">${t('calories')}</label><input class="input" id="m-cal" type="number" value="${Math.round(f.cal)}"/></div></div><div class="row"><div style="flex:1;"><label class="label">${t('protein')}</label><input class="input" id="m-p" type="number" step="0.1" value="${Math.round(f.p*10)/10}"/></div><div style="flex:1;"><label class="label">${t('carbs')}</label><input class="input" id="m-c" type="number" step="0.1" value="${Math.round(f.c*10)/10}"/></div><div style="flex:1;"><label class="label">${t('fat')}</label><input class="input" id="m-f" type="number" step="0.1" value="${Math.round(f.f*10)/10}"/></div></div><div class="row" style="margin-top:12px;"><button class="btn" style="flex:1;" onclick="closeModal()">${t('cancel')}</button><button class="btn btn-primary" style="flex:1;" onclick="saveMeal()">${t('save')}</button></div>`);
 }
-
-function saveMeal(){
-  const m={name:document.getElementById('m-name').value||'?',portion:+document.getElementById('m-portion').value||0,cal:+document.getElementById('m-cal').value||0,p:+document.getElementById('m-p').value||0,c:+document.getElementById('m-c').value||0,f:+document.getElementById('m-f').value||0,time:Date.now()};
-  getDay(todayKey()).meals.push(m);save();closeModal();render();
-}
-
-/* ========== PHOTO / AI RECOGNITION ========== */
-
+function saveMeal(){const m={name:document.getElementById('m-name').value||'?',portion:+document.getElementById('m-portion').value||0,cal:+document.getElementById('m-cal').value||0,p:+document.getElementById('m-p').value||0,c:+document.getElementById('m-c').value||0,f:+document.getElementById('m-f').value||0,time:Date.now()};getDay(viewingDate).meals.push(m);save();closeModal();render();}
 function openPhotoModal(){
-  if(!state.apiKey){
-    modal(`<h3>📷 ${t('photo2')}</h3><div class="status-msg error">${t('noApiKey')}</div><button class="btn" style="width:100%;margin-top:12px;" onclick="closeModal()">${t('cancel')}</button>`);
-    return;
-  }
-  modal(`<h3>📷 ${t('photo2')}</h3>
-    <div style="display:flex; gap:8px; margin:12px 0;">
-      <button class="btn btn-primary" style="flex:1;" onclick="document.getElementById('photo-input').click()">${t('takePhoto')}</button>
-      <button class="btn" style="flex:1;" onclick="document.getElementById('gallery-input').click()">${t('choosePhoto')}</button>
-    </div>
-    <button class="btn" style="width:100%;" onclick="closeModal()">${t('cancel')}</button>`);
+  if(!state.apiKey){modal(`<h3>📷 ${t('photo2')}</h3><div class="status-msg error">${t('noApiKey')}</div><button class="btn" style="width:100%;margin-top:12px;" onclick="closeModal()">${t('cancel')}</button>`);return;}
+  modal(`<h3>📷 ${t('photo2')}</h3><div style="display:flex;gap:8px;margin:12px 0;"><button class="btn btn-primary" style="flex:1;" onclick="document.getElementById('photo-input').click()">${t('takePhoto')}</button><button class="btn" style="flex:1;" onclick="document.getElementById('gallery-input').click()">${t('choosePhoto')}</button></div><button class="btn" style="width:100%;" onclick="closeModal()">${t('cancel')}</button>`);
 }
-
-function handlePhoto(input){
-  const file=input.files[0];
-  if(!file)return;
-  input.value='';
-  const reader=new FileReader();
-  reader.onload=function(e){
-    const base64=e.target.result.split(',')[1];
-    const dataUrl=e.target.result;
-    modal(`<h3>📷 ${t('photo2')}</h3>
-      <img src="${dataUrl}" class="photo-preview"/>
-      <div style="text-align:center; padding:16px 0;">
-        <div class="spinner"></div>
-        <div class="status-msg" style="margin-top:8px;">${t('analyzing')}</div>
-      </div>`);
-    analyzeWithGPT4o(base64);
-  };
-  reader.readAsDataURL(file);
-}
-
+function handlePhoto(input){const file=input.files[0];if(!file)return;input.value='';const reader=new FileReader();reader.onload=function(e){const base64=e.target.result.split(',')[1],dataUrl=e.target.result;modal(`<h3>📷 ${t('photo2')}</h3><img src="${dataUrl}" class="photo-preview"/><div style="text-align:center;padding:16px 0;"><div class="spinner"></div><div class="status-msg" style="margin-top:8px;">${t('analyzing')}</div></div>`);analyzeWithGPT4o(base64);};reader.readAsDataURL(file);}
 async function analyzeWithGPT4o(base64){
-  const systemPrompt=lang==='no'
-    ? 'Du er en matgjenkjennings-AI. Analyser bildet og estimer næringsinnholdet. Svar KUN med gyldig JSON, ingen annen tekst. Format: {"food_name":"string","estimated_portion_grams":number,"calories_kcal":number,"protein_g":number,"carbs_g":number,"fat_g":number,"confidence":"low"|"medium"|"high"}'
-    : 'You are a food recognition AI. Analyze the image and estimate nutritional content. Respond ONLY with valid JSON, no other text. Format: {"food_name":"string","estimated_portion_grams":number,"calories_kcal":number,"protein_g":number,"carbs_g":number,"fat_g":number,"confidence":"low"|"medium"|"high"}';
-
-  try{
-    const resp=await fetch('https://api.openai.com/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+state.apiKey},
-      body:JSON.stringify({
-        model:'gpt-4o',
-        max_tokens:300,
-        messages:[
-          {role:'system',content:systemPrompt},
-          {role:'user',content:[
-            {type:'image_url',image_url:{url:'data:image/jpeg;base64,'+base64,detail:'low'}},
-            {type:'text',text:lang==='no'?'Hva er dette? Estimer makroer.':'What is this? Estimate macros.'}
-          ]}
-        ]
-      })
-    });
-
-    if(!resp.ok){
-      const err=await resp.json().catch(()=>({}));
-      throw new Error(err.error?.message||'API error '+resp.status);
-    }
-
-    const data=await resp.json();
-    let text=data.choices[0].message.content.trim();
-    text=text.replace(/```json\s*/g,'').replace(/```/g,'').trim();
-    const result=JSON.parse(text);
-
-    closeModal();
-    openManualModal({
-      name:result.food_name||'?',
-      portion:result.estimated_portion_grams||100,
-      cal:result.calories_kcal||0,
-      p:result.protein_g||0,
-      c:result.carbs_g||0,
-      f:result.fat_g||0,
-      _ai:result.confidence||'medium'
-    });
-  }catch(err){
-    modal(`<h3>📷 ${t('photo2')}</h3>
-      <div class="status-msg error">${esc(err.message)}</div>
-      <div class="row" style="margin-top:12px;">
-        <button class="btn" style="flex:1;" onclick="closeModal()">${t('cancel')}</button>
-        <button class="btn btn-primary" style="flex:1;" onclick="closeModal();openPhotoModal()">Prøv igjen</button>
-      </div>`);
-  }
+  const sp=lang==='no'?'Du er en matgjenkjennings-AI. Analyser bildet og estimer næringsinnholdet. Svar KUN med gyldig JSON, ingen annen tekst. Format: {"food_name":"string","estimated_portion_grams":number,"calories_kcal":number,"protein_g":number,"carbs_g":number,"fat_g":number,"confidence":"low"|"medium"|"high"}':'You are a food recognition AI. Analyze the image and estimate nutritional content. Respond ONLY with valid JSON, no other text. Format: {"food_name":"string","estimated_portion_grams":number,"calories_kcal":number,"protein_g":number,"carbs_g":number,"fat_g":number,"confidence":"low"|"medium"|"high"}';
+  try{const resp=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+state.apiKey},body:JSON.stringify({model:'gpt-4o',max_tokens:300,messages:[{role:'system',content:sp},{role:'user',content:[{type:'image_url',image_url:{url:'data:image/jpeg;base64,'+base64,detail:'low'}},{type:'text',text:lang==='no'?'Hva er dette? Estimer makroer.':'What is this? Estimate macros.'}]}]})});
+  if(!resp.ok){const err=await resp.json().catch(()=>({}));throw new Error(err.error?.message||'API error '+resp.status);}
+  const data=await resp.json();let text=data.choices[0].message.content.trim();text=text.replace(/```json\s*/g,'').replace(/```/g,'').trim();const r=JSON.parse(text);
+  closeModal();openManualModal({name:r.food_name||'?',portion:r.estimated_portion_grams||100,cal:r.calories_kcal||0,p:r.protein_g||0,c:r.carbs_g||0,f:r.fat_g||0,_ai:r.confidence||'medium'});
+  }catch(err){modal(`<h3>📷 ${t('photo2')}</h3><div class="status-msg error">${esc(err.message)}</div><div class="row" style="margin-top:12px;"><button class="btn" style="flex:1;" onclick="closeModal()">${t('cancel')}</button><button class="btn btn-primary" style="flex:1;" onclick="closeModal();openPhotoModal()">Prøv igjen</button></div>`);}
 }
-
-/* ========== BARCODE SCANNER ========== */
-
-let barcodeStream=null;
-function stopBarcodeScanner(){
-  if(barcodeStream){barcodeStream.getTracks().forEach(t=>t.stop());barcodeStream=null;}
-}
-
+let barcodeStream=null,searchTimeout=null;
+function stopBarcodeScanner(){if(barcodeStream){barcodeStream.getTracks().forEach(t=>t.stop());barcodeStream=null;}}
 function openBarcodeModal(){
   modal(`<h3>▦ ${t('barcode2')}</h3>
-    <div class="scanner-area" id="scanner-area">
-      <video id="scanner-video" autoplay playsinline muted></video>
-      <div class="scanner-line"></div>
-    </div>
+    <div class="scanner-area" id="scanner-area"><video id="scanner-video" autoplay playsinline muted></video><div class="scanner-line"></div></div>
     <div class="status-msg" id="scan-status">${t('scanningBarcode')}</div>
-    <div style="margin-top:8px;">
-      <label class="label">${t('enterBarcode')}</label>
-      <div class="api-key-row">
-        <input class="input" id="manual-barcode" type="text" placeholder="7037203626357" inputmode="numeric"/>
-        <button class="btn" style="white-space:nowrap; font-size:12px;" onclick="lookupManualBarcode()">${t('lookupBarcode')}</button>
-      </div>
+    <div style="margin-top:12px;"><label class="label">${t('enterBarcode')}</label><div class="api-key-row"><input class="input" id="manual-barcode" type="text" placeholder="7037203626357" inputmode="numeric"/><button class="btn" style="white-space:nowrap;font-size:12px;" onclick="lookupManualBarcode()">${t('lookupBarcode')}</button></div></div>
+    <div style="margin-top:16px;border-top:0.5px solid rgba(0,0,0,0.08);padding-top:12px;">
+      <label class="label">${t('searchProduct')}</label>
+      <input class="input" id="product-search" type="text" placeholder="${t('searchPlaceholder')}" oninput="onProductSearch(this.value)"/>
+      <div id="search-results"></div>
     </div>
     <button class="btn" style="width:100%;margin-top:12px;" onclick="closeModal()">${t('cancel')}</button>`);
-
   startBarcodeScanner();
 }
-
-async function startBarcodeScanner(){
-  const video=document.getElementById('scanner-video');
-  if(!video)return;
-
-  try{
-    barcodeStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}});
-    video.srcObject=barcodeStream;
-
-    if('BarcodeDetector' in window){
-      const detector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e']});
-      const scanLoop=async()=>{
-        if(!barcodeStream)return;
-        try{
-          const barcodes=await detector.detect(video);
-          if(barcodes.length>0){
-            const code=barcodes[0].rawValue;
-            document.getElementById('scan-status').textContent=t('barcodeFound');
-            document.getElementById('scan-status').className='status-msg success';
-            stopBarcodeScanner();
-            await lookupBarcode(code);
-            return;
-          }
-        }catch(e){}
-        if(barcodeStream)requestAnimationFrame(scanLoop);
-      };
-      video.onplaying=()=>setTimeout(scanLoop,500);
-    } else {
-      document.getElementById('scan-status').textContent=lang==='no'?'Kameraet er på, men nettleseren din støtter ikke automatisk strekkodeskanning. Skriv inn strekkoden manuelt under.':'Camera is on, but your browser does not support auto-scanning. Enter the barcode manually below.';
-    }
-  }catch(err){
-    document.getElementById('scan-status').textContent=lang==='no'?'Kunne ikke åpne kameraet. Skriv inn strekkoden manuelt.':'Could not open camera. Enter the barcode manually.';
-    document.getElementById('scan-status').className='status-msg error';
-  }
-}
-
-function lookupManualBarcode(){
-  const code=document.getElementById('manual-barcode').value.trim();
-  if(!code)return;
-  document.getElementById('scan-status').textContent=t('barcodeFound');
-  document.getElementById('scan-status').className='status-msg success';
-  stopBarcodeScanner();
-  lookupBarcode(code);
-}
-
-async function lookupBarcode(code){
-  try{
-    const resp=await fetch('https://world.openfoodfacts.org/api/v0/product/'+code+'.json');
-    const data=await resp.json();
-
-    if(data.status===1 && data.product){
-      const p=data.product;
-      const n=p.nutriments||{};
-      const name=p.product_name||p.product_name_no||p.product_name_en||'?';
-      const portion=p.serving_quantity||100;
-      const factor=portion/100;
-
-      closeModal();
-      openManualModal({
-        name:name,
-        portion:Math.round(portion),
-        cal:Math.round((n['energy-kcal_100g']||0)*factor),
-        p:Math.round(((n.proteins_100g||0)*factor)*10)/10,
-        c:Math.round(((n.carbohydrates_100g||0)*factor)*10)/10,
-        f:Math.round(((n.fat_100g||0)*factor)*10)/10,
-        _barcode:true
-      });
-    }else{
-      document.getElementById('scan-status').textContent=t('barcodeNotFound');
-      document.getElementById('scan-status').className='status-msg error';
-    }
-  }catch(err){
-    document.getElementById('scan-status').textContent=t('barcodeError');
-    document.getElementById('scan-status').className='status-msg error';
-  }
-}
-
-/* ========== EXERCISE ========== */
-
-function openExerciseModal(){
-  modal(`<h3>${t('exercise')}</h3>
-    <label class="label">${t('exerciseType')}</label>
-    <select class="input" id="ex-type">
-      <option value="boxing|11">${t('boxing')}</option>
-      <option value="running|10">${t('running')}</option>
-      <option value="strength|6">${t('strength')}</option>
-      <option value="cardio|8">${t('cardio')}</option>
-      <option value="other|5">${t('other')}</option>
-    </select>
-    <div class="row" style="margin-top:8px;">
-      <div style="flex:1;"><label class="label">${t('duration')}</label><input class="input" id="ex-dur" type="number" value="60"/></div>
-    </div>
-    <div class="row" style="margin-top:12px;">
-      <button class="btn" style="flex:1;" onclick="closeModal()">${t('cancel')}</button>
-      <button class="btn btn-primary" style="flex:1;" onclick="saveExercise()">${t('save')}</button>
-    </div>`);
-}
-function saveExercise(){
-  const[type,met]=document.getElementById('ex-type').value.split('|');
-  const dur=+document.getElementById('ex-dur').value||0;
-  const weight=state.profile.weight;
-  const burned=(+met)*weight*(dur/60);
-  const nm={boxing:t('boxing'),running:t('running'),strength:t('strength'),cardio:t('cardio'),other:t('other')};
-  getDay(todayKey()).exercises.push({name:nm[type],duration:dur,burned});
-  save();closeModal();render();
-}
-
-/* ========== HISTORY / STATS / PROFILE ========== */
-
-function renderHistory(){
-  const h=document.getElementById('history-list');
-  const days=Object.keys(state.days).sort().reverse();
-  if(days.length===0){h.innerHTML='<div class="empty">'+t('noHistory')+'</div>';return;}
-  h.innerHTML=days.map(d=>{
-    const day=state.days[d];let cal=0;day.meals.forEach(m=>cal+=m.cal);
-    const dt=new Date(d).toLocaleDateString(lang==='no'?'no-NO':'en-US',{weekday:'short',day:'numeric',month:'short'});
-    const mh=day.meals.map(m=>`<div style="font-size:13px;color:#666;padding:4px 0;">· ${esc(m.name)} — ${Math.round(m.cal)} kcal</div>`).join('');
-    return`<div style="margin-bottom:16px;"><div style="font-weight:500;font-size:14px;">${dt} <span style="color:#666;font-weight:400;font-size:12px;">(${Math.round(cal)} kcal)</span></div>${mh||'<div class="empty" style="padding:4px 0;">—</div>'}</div>`;
-  }).join('');
-}
-
-function renderStats(){
-  const days=[];
-  for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=d.toISOString().slice(0,10);const day=state.days[k]||{meals:[]};let cal=0;day.meals.forEach(m=>cal+=m.cal);days.push({label:d.toLocaleDateString(lang==='no'?'no-NO':'en-US',{weekday:'short'}),cal});}
-  const max=Math.max(state.profile.goals.cal*1.2,...days.map(d=>d.cal));
-  const barW=40,gap=16,startX=30;
-  const goalY=140-(state.profile.goals.cal/max)*120;
-  let html=`<line x1="20" y1="${goalY}" x2="400" y2="${goalY}" stroke="#378ADD" stroke-width="1" stroke-dasharray="4 3"/><text x="400" y="${goalY-4}" text-anchor="end" font-size="10" fill="#378ADD">${state.profile.goals.cal} kcal</text>`;
-  days.forEach((d,i)=>{const h=(d.cal/max)*120;const x=startX+i*(barW+gap);html+=`<rect x="${x}" y="${140-h}" width="${barW}" height="${h}" fill="#B5D4F4" rx="3"/><text x="${x+barW/2}" y="158" text-anchor="middle" font-size="11" fill="#666">${d.label}</text>`;if(d.cal>0)html+=`<text x="${x+barW/2}" y="${140-h-4}" text-anchor="middle" font-size="10" fill="currentColor">${Math.round(d.cal)}</text>`;});
-  document.getElementById('weekly-chart').innerHTML=html;
-  const logged=days.filter(d=>d.cal>0);
-  const avg=logged.length?Math.round(logged.reduce((s,d)=>s+d.cal,0)/logged.length):0;
-  document.getElementById('stat-avg-cal').textContent=avg;
-  let streak=0;for(let i=days.length-1;i>=0;i--){if(days[i].cal>0)streak++;else break;}
-  document.getElementById('stat-streak').textContent=streak+' '+t('days');
-}
-
-function renderProfile(){
-  const p=state.profile;const g=p.goals;
-  document.getElementById('profile-info').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="metric"><div class="metric-label">${t('calories')}</div><div class="metric-value">${g.cal}</div><div class="metric-sub">kcal/${lang==='no'?'dag':'day'}</div></div><div class="metric"><div class="metric-label">TDEE</div><div class="metric-value">${g.tdee}</div><div class="metric-sub">kcal</div></div><div class="metric"><div class="metric-label">${t('protein')}</div><div class="metric-value">${g.p}g</div></div><div class="metric"><div class="metric-label">${t('weight')}</div><div class="metric-value">${p.weight}→${p.target}kg</div><div class="metric-sub">${p.weeks} ${lang==='no'?'uker':'weeks'}</div></div></div>`;
-  const keyInput=document.getElementById('api-key-profile');
-  if(keyInput)keyInput.value=state.apiKey||'';
-}
-
+async function startBarcodeScanner(){const video=document.getElementById('scanner-video');if(!video)return;try{barcodeStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}});video.srcObject=barcodeStream;if('BarcodeDetector' in window){const det=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e']});const loop=async()=>{if(!barcodeStream)return;try{const bc=await det.detect(video);if(bc.length>0){document.getElementById('scan-status').textContent=t('barcodeFound');document.getElementById('scan-status').className='status-msg success';stopBarcodeScanner();await lookupBarcode(bc[0].rawValue);return;}}catch(e){}if(barcodeStream)requestAnimationFrame(loop);};video.onplaying=()=>setTimeout(loop,500);}else{document.getElementById('scan-status').textContent=lang==='no'?'Nettleseren støtter ikke auto-skanning. Skriv inn strekkoden eller søk etter produkt.':'Browser does not support auto-scanning. Enter barcode or search below.';}}catch(err){document.getElementById('scan-status').textContent=lang==='no'?'Kunne ikke åpne kameraet. Skriv inn strekkoden eller søk.':'Could not open camera. Enter barcode or search.';document.getElementById('scan-status').className='status-msg error';}}
+function lookupManualBarcode(){const code=document.getElementById('manual-barcode').value.trim();if(!code)return;const st=document.getElementById('scan-status');st.textContent=t('barcodeFound');st.className='status-msg success';stopBarcodeScanner();lookupBarcode(code);}
+async function lookupBarcode(code){try{const resp=await fetch('https://world.openfoodfacts.org/api/v0/product/'+code+'.json');const data=await resp.json();if(data.status===1&&data.product){openProductResult(data.product);}else{const st=document.getElementById('scan-status');if(st){st.textContent=t('barcodeNotFound');st.className='status-msg error';}}}catch(err){const st=document.getElementById('scan-status');if(st){st.textContent=t('barcodeError');st.className='status-msg error';}}}
+function openProductResult(p){const n=p.nutriments||{},name=p.product_name||p.product_name_no||p.product_name_en||'?',portion=p.serving_quantity||100,fac=portion/100;closeModal();openManualModal({name:name,portion:Math.round(portion),cal:Math.round((n['energy-kcal_100g']||0)*fac),p:Math.round(((n.proteins_100g||0)*fac)*10)/10,c:Math.round(((n.carbohydrates_100g||0)*fac)*10)/10,f:Math.round(((n.fat_100g||0)*fac)*10)/10,_barcode:true});}
+function onProductSearch(q){clearTimeout(searchTimeout);const box=document.getElementById('search-results');if(q.length<2){box.innerHTML='';return;}box.innerHTML=`<div class="status-msg">${t('searching')}</div>`;searchTimeout=setTimeout(()=>searchProducts(q),400);}
+async function searchProducts(q){const box=document.getElementById('search-results');try{const url='https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(q)+'&search_simple=1&action=process&json=1&page_size=8&fields=product_name,nutriments,serving_quantity,brands';const resp=await fetch(url);const data=await resp.json();if(!data.products||data.products.length===0){box.innerHTML=`<div class="status-msg">${t('noResults')}</div>`;return;}window._sr=data.products.filter(p=>p.product_name);box.innerHTML='<div class="search-results-box">'+window._sr.map((p,i)=>{const n=p.nutriments||{},cal=Math.round(n['energy-kcal_100g']||0),prot=Math.round((n.proteins_100g||0)*10)/10,brand=p.brands?(' · '+esc(p.brands.split(',')[0])):'';return`<div class="search-result" onclick="pickSearchResult(${i})"><div class="search-result-name">${esc(p.product_name)}</div><div class="search-result-meta">${cal} kcal/100g · P${prot}g${brand}</div></div>`;}).join('')+'</div>';}catch(err){box.innerHTML=`<div class="status-msg error">${t('barcodeError')}</div>`;}}
+function pickSearchResult(i){if(window._sr&&window._sr[i])openProductResult(window._sr[i]);}
+function openExerciseModal(){modal(`<h3>${t('exercise')}</h3><label class="label">${t('exerciseType')}</label><select class="input" id="ex-type"><option value="boxing|11">${t('boxing')}</option><option value="running|10">${t('running')}</option><option value="strength|6">${t('strength')}</option><option value="cardio|8">${t('cardio')}</option><option value="other|5">${t('other')}</option></select><div class="row" style="margin-top:8px;"><div style="flex:1;"><label class="label">${t('duration')}</label><input class="input" id="ex-dur" type="number" value="60"/></div></div><div class="row" style="margin-top:12px;"><button class="btn" style="flex:1;" onclick="closeModal()">${t('cancel')}</button><button class="btn btn-primary" style="flex:1;" onclick="saveExercise()">${t('save')}</button></div>`);}
+function saveExercise(){const[type,met]=document.getElementById('ex-type').value.split('|');const dur=+document.getElementById('ex-dur').value||0;const burned=(+met)*state.profile.weight*(dur/60);const nm={boxing:t('boxing'),running:t('running'),strength:t('strength'),cardio:t('cardio'),other:t('other')};getDay(viewingDate).exercises.push({name:nm[type],duration:dur,burned});save();closeModal();render();}
+function renderHistory(){const h=document.getElementById('history-list');const days=Object.keys(state.days).sort().reverse();if(days.length===0){h.innerHTML='<div class="empty">'+t('noHistory')+'</div>';return;}h.innerHTML=days.map(d=>{const day=state.days[d];let cal=0;day.meals.forEach(m=>cal+=m.cal);const dt=new Date(d+'T12:00:00').toLocaleDateString(lang==='no'?'no-NO':'en-US',{weekday:'short',day:'numeric',month:'short'});const mh=day.meals.map(m=>`<div style="font-size:13px;color:#666;padding:4px 0;">· ${esc(m.name)} — ${Math.round(m.cal)} kcal</div>`).join('');return`<div style="margin-bottom:16px;cursor:pointer;" onclick="viewingDate='${d}';switchView('home');"><div style="font-weight:500;font-size:14px;">${dt} <span style="color:#666;font-weight:400;font-size:12px;">(${Math.round(cal)} kcal)</span> <span style="font-size:11px;color:#378ADD;">→</span></div>${mh||'<div class="empty" style="padding:4px 0;">—</div>'}</div>`;}).join('');}
+function renderStats(){const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=d.toISOString().slice(0,10);const day=state.days[k]||{meals:[]};let cal=0;day.meals.forEach(m=>cal+=m.cal);days.push({label:d.toLocaleDateString(lang==='no'?'no-NO':'en-US',{weekday:'short'}),cal});}const max=Math.max(state.profile.goals.cal*1.2,...days.map(d=>d.cal));const barW=40,gap=16,startX=30,goalY=140-(state.profile.goals.cal/max)*120;let html=`<line x1="20" y1="${goalY}" x2="400" y2="${goalY}" stroke="#378ADD" stroke-width="1" stroke-dasharray="4 3"/><text x="400" y="${goalY-4}" text-anchor="end" font-size="10" fill="#378ADD">${state.profile.goals.cal} kcal</text>`;days.forEach((d,i)=>{const h=(d.cal/max)*120,x=startX+i*(barW+gap);html+=`<rect x="${x}" y="${140-h}" width="${barW}" height="${h}" fill="#B5D4F4" rx="3"/><text x="${x+barW/2}" y="158" text-anchor="middle" font-size="11" fill="#666">${d.label}</text>`;if(d.cal>0)html+=`<text x="${x+barW/2}" y="${140-h-4}" text-anchor="middle" font-size="10" fill="currentColor">${Math.round(d.cal)}</text>`;});document.getElementById('weekly-chart').innerHTML=html;const logged=days.filter(d=>d.cal>0);document.getElementById('stat-avg-cal').textContent=logged.length?Math.round(logged.reduce((s,d)=>s+d.cal,0)/logged.length):0;let streak=0;for(let i=days.length-1;i>=0;i--){if(days[i].cal>0)streak++;else break;}document.getElementById('stat-streak').textContent=streak+' '+t('days');}
+function renderProfile(){const p=state.profile,g=p.goals;document.getElementById('profile-info').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="metric"><div class="metric-label">${t('calories')}</div><div class="metric-value">${g.cal}</div><div class="metric-sub">kcal/${lang==='no'?'dag':'day'}</div></div><div class="metric"><div class="metric-label">TDEE</div><div class="metric-value">${g.tdee}</div><div class="metric-sub">kcal</div></div><div class="metric"><div class="metric-label">${t('protein')}</div><div class="metric-value">${g.p}g</div></div><div class="metric"><div class="metric-label">${t('weight')}</div><div class="metric-value">${p.weight}→${p.target}kg</div><div class="metric-sub">${p.weeks} ${lang==='no'?'uker':'weeks'}</div></div></div>`;const ki=document.getElementById('api-key-profile');if(ki)ki.value=state.apiKey||'';}
 function editProfile(){state.profile=null;save();render();}
 function resetAll(){if(confirm(lang==='no'?'Slette alle data?':'Delete all data?')){state={profile:null,days:{},apiKey:state.apiKey};save();render();}}
-
 render();
 </script>
 </body>
