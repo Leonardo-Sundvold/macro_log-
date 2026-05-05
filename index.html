@@ -99,6 +99,9 @@
   .fav-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 0.5px solid rgba(0,0,0,0.06); cursor: pointer; }
   .fav-item:hover { background: rgba(0,0,0,0.02); margin: 0 -8px; padding: 8px; border-radius: 6px; border-bottom-color: transparent; }
   .fav-item:last-child { border-bottom: none; }
+  .qty-controls { display: flex; align-items: center; gap: 0; margin-right: 4px; }
+  .qty-btn { width: 26px; height: 26px; border-radius: 50%; border: 0.5px solid rgba(0,0,0,0.15); background: #f5f5f3; font-size: 16px; cursor: pointer; color: #1a1a1a; display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1; }
+  .qty-num { font-size: 14px; font-weight: 500; min-width: 24px; text-align: center; }
   @media (prefers-color-scheme: dark) {
     html, body { background: #0f0f0f; color: #f0f0f0; }
     .card { background: #1a1a1a; border-color: rgba(255,255,255,0.1); }
@@ -421,7 +424,7 @@ function render(){
   applyI18n();
   if(!state.profile){document.getElementById('onboard').style.display='';document.getElementById('main').style.display='none';document.getElementById('api-banner').style.display=!state.apiKey?'':'none';return;}
   document.getElementById('onboard').style.display='none';document.getElementById('main').style.display='';document.getElementById('api-banner').style.display='none';
-  const day=getDay(viewingDate),g=state.profile.goals;let cal=0,p=0,c=0,f=0;day.meals.forEach(m=>{cal+=m.cal;p+=m.p;c+=m.c;f+=m.f;});let burned=0;day.exercises.forEach(e=>burned+=e.burned);const adj=g.cal+burned;
+  const day=getDay(viewingDate),g=state.profile.goals;let cal=0,p=0,c=0,f=0;day.meals.forEach(m=>{const q=m.qty||1;cal+=m.cal*q;p+=m.p*q;c+=m.c*q;f+=m.f*q;});let burned=0;day.exercises.forEach(e=>burned+=e.burned);const adj=g.cal+burned;
   document.getElementById('day-nav-date').textContent=formatDayLabel(viewingDate);
   document.getElementById('day-nav-sub').textContent=formatDaySub(viewingDate);
   document.getElementById('day-next').disabled=(viewingDate>=todayKey());
