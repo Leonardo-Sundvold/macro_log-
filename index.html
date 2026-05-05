@@ -85,6 +85,20 @@
   .auth-status { font-size: 12px; text-align: center; margin-top: 8px; }
   .sync-badge { font-size: 10px; padding: 2px 6px; border-radius: 10px; background: #C0DD97; color: #2a5a10; margin-left: 6px; }
   .sync-badge.offline { background: #FAEEDA; color: #633806; }
+  .streak-card { text-align: center; padding: 12px; }
+  .streak-fire { font-size: 32px; line-height: 1; }
+  .streak-count { font-size: 28px; font-weight: 600; margin: 4px 0; }
+  .streak-label { font-size: 12px; color: #666; }
+  .streak-badge { display: inline-block; font-size: 11px; padding: 3px 8px; border-radius: 10px; margin: 2px; }
+  .streak-badge.earned { background: #C0DD97; color: #2a5a10; }
+  .streak-badge.locked { background: #f5f5f3; color: #ccc; }
+  .daily-score { font-size: 36px; font-weight: 600; text-align: center; }
+  .score-label { font-size: 12px; color: #666; text-align: center; margin-top: 4px; }
+  .score-bar { height: 10px; background: #f5f5f3; border-radius: 5px; overflow: hidden; margin-top: 8px; }
+  .score-fill { height: 100%; border-radius: 5px; transition: width 0.5s, background 0.5s; }
+  .fav-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 0.5px solid rgba(0,0,0,0.06); cursor: pointer; }
+  .fav-item:hover { background: rgba(0,0,0,0.02); margin: 0 -8px; padding: 8px; border-radius: 6px; border-bottom-color: transparent; }
+  .fav-item:last-child { border-bottom: none; }
   @media (prefers-color-scheme: dark) {
     html, body { background: #0f0f0f; color: #f0f0f0; }
     .card { background: #1a1a1a; border-color: rgba(255,255,255,0.1); }
@@ -186,7 +200,9 @@
         <div><div class="metric-label" data-i18n="carbs">Karbo</div><div class="progress-bar"><div class="progress-fill" id="bar-c" style="background:#EF9F27;width:0%"></div></div><div class="metric-sub" id="txt-c">0/0g</div></div>
         <div><div class="metric-label" data-i18n="fat">Fett</div><div class="progress-bar"><div class="progress-fill" id="bar-f" style="background:#7F77DD;width:0%"></div></div><div class="metric-sub" id="txt-f">0/0g</div></div>
       </div>
+      <div id="daily-score-wrap" style="margin-top:12px;"></div>
     </div>
+    <div class="card" id="streak-card-wrap"></div>
     <div class="card">
       <h3 data-i18n="addFood">Legg til mat</h3>
       <div class="btn-row" style="margin-top:8px;">
@@ -194,6 +210,12 @@
         <button class="btn" onclick="openBarcodeModal()">▦ <span data-i18n="barcode2">Strekkode</span></button>
         <button class="btn" onclick="openManualModal()">✎ <span data-i18n="manual2">Manuelt</span></button>
       </div>
+    </div>
+    <div class="card" id="favorites-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3>⚡ <span data-i18n="quickAdd">Rask-logg</span></h3>
+      </div>
+      <div id="favorites-list"><div class="empty" style="padding:12px 0;" data-i18n="noFavs">Logg noe mat først, så dukker favorittene opp her</div></div>
     </div>
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -314,7 +336,7 @@ function saveAndSync(){
 const _origSave=save;
 </script>
 <script>
-const i18n={no:{welcome:'Velkommen til MacroLog',welcomeSub:'Sett opp målene dine for å komme i gang.',age:'Alder',sex:'Kjønn',male:'Mann',female:'Kvinne',height:'Høyde (cm)',weight:'Vekt (kg)',target:'Målvekt (kg)',weeks:'Uker',activity:'Aktivitetsnivå',sed:'Stillesittende',light:'Lett aktiv',mod:'Moderat aktiv (trening 3-5 ganger/uke)',very:'Veldig aktiv',start:'Start',home:'I dag',log:'Logg',stats:'Statistikk',profile:'Profil',today:'I dag',protein:'Protein',carbs:'Karbo',fat:'Fett',addFood:'Legg til mat',photo2:'Bilde',barcode2:'Strekkode',manual2:'Manuelt',water:'Vann',exercise:'Trening',add:'+ Legg til',meals:'Dagens måltider',noMeals:'Ingen måltider logget ennå',history:'Historikk',stats7:'Siste 7 dager',avgCal:'Snitt kcal/dag',streak:'Streak',days:'dager',editGoals:'Endre mål',reset:'Tilbakestill alt',remaining:'igjen',over:'over',foodName:'Matnavn',portion:'Porsjon (g)',calories:'Kalorier',save:'Lagre',cancel:'Avbryt',aiGuess:'AI gjettet:',editHint:'Du kan endre alt før du lagrer',analyzing:'Analyserer bildet med AI…',exerciseType:'Type',duration:'Varighet (min)',boxing:'Boksing',running:'Løping',strength:'Styrke',cardio:'Kondis',other:'Annet',noHistory:'Ingen historikk ennå',takePhoto:'Ta bilde',choosePhoto:'Velg fra galleri',noApiKey:'Du trenger en OpenAI API-nøkkel for bildegjenkjenning. Legg den inn under Profil.',scanningBarcode:'Skanner etter strekkode…',barcodeFound:'Fant produkt! Henter info…',barcodeNotFound:'Fant ikke produktet. Prøv å søke etter navn.',barcodeError:'Kunne ikke lese strekkoden.',apiExplain:'For at bildegjenkjenning skal fungere trenger du en OpenAI API-nøkkel. Strekkodeskanneren fungerer uten.',apiNote:'Nøkkelen lagres kun lokalt i denne nettleseren.',apiSaved:'Nøkkel lagret!',apiRemoved:'Nøkkel fjernet',enterBarcode:'Skriv inn strekkode:',lookupBarcode:'Søk',searchProduct:'Søk etter matvare',searchPlaceholder:'F.eks. "Grandiosa", "melk", "havregryn"…',searching:'Søker…',noResults:'Ingen resultater. Prøv et annet søkeord.',todayLabel:'I dag',yesterdayLabel:'I går',perGlass:'1 glass = 2.5 dl'},en:{welcome:'Welcome to MacroLog',welcomeSub:'Set up your goals to get started.',age:'Age',sex:'Sex',male:'Male',female:'Female',height:'Height (cm)',weight:'Weight (kg)',target:'Target weight (kg)',weeks:'Weeks',activity:'Activity level',sed:'Sedentary',light:'Lightly active',mod:'Moderately active (3-5x/week)',very:'Very active',start:'Start',home:'Today',log:'Log',stats:'Stats',profile:'Profile',today:'Today',protein:'Protein',carbs:'Carbs',fat:'Fat',addFood:'Add food',photo2:'Photo',barcode2:'Barcode',manual2:'Manual',water:'Water',exercise:'Exercise',add:'+ Add',meals:"Today's meals",noMeals:'No meals logged yet',history:'History',stats7:'Last 7 days',avgCal:'Avg kcal/day',streak:'Streak',days:'days',editGoals:'Edit goals',reset:'Reset everything',remaining:'left',over:'over',foodName:'Food name',portion:'Portion (g)',calories:'Calories',save:'Save',cancel:'Cancel',aiGuess:'AI guessed:',editHint:'You can edit everything before saving',analyzing:'Analyzing image with AI…',exerciseType:'Type',duration:'Duration (min)',boxing:'Boxing',running:'Running',strength:'Strength',cardio:'Cardio',other:'Other',noHistory:'No history yet',takePhoto:'Take photo',choosePhoto:'Choose from gallery',noApiKey:'You need an OpenAI API key for image recognition. Add it under Profile.',scanningBarcode:'Scanning for barcode…',barcodeFound:'Product found!',barcodeNotFound:'Product not found. Try searching by name.',barcodeError:'Could not read barcode.',apiExplain:'Image recognition requires an OpenAI API key. The barcode scanner works without one.',apiNote:'The key is stored only in this browser.',apiSaved:'Key saved!',apiRemoved:'Key removed',enterBarcode:'Enter barcode:',lookupBarcode:'Look up',searchProduct:'Search for food',searchPlaceholder:'E.g. "pizza", "milk", "oatmeal"…',searching:'Searching…',noResults:'No results. Try a different term.',todayLabel:'Today',yesterdayLabel:'Yesterday',perGlass:'1 glass = 2.5 dl'}};
+const i18n={no:{welcome:'Velkommen til MacroLog',welcomeSub:'Sett opp målene dine for å komme i gang.',age:'Alder',sex:'Kjønn',male:'Mann',female:'Kvinne',height:'Høyde (cm)',weight:'Vekt (kg)',target:'Målvekt (kg)',weeks:'Uker',activity:'Aktivitetsnivå',sed:'Stillesittende',light:'Lett aktiv',mod:'Moderat aktiv (trening 3-5 ganger/uke)',very:'Veldig aktiv',start:'Start',home:'I dag',log:'Logg',stats:'Statistikk',profile:'Profil',today:'I dag',protein:'Protein',carbs:'Karbo',fat:'Fett',addFood:'Legg til mat',photo2:'Bilde',barcode2:'Strekkode',manual2:'Manuelt',water:'Vann',exercise:'Trening',add:'+ Legg til',meals:'Dagens måltider',noMeals:'Ingen måltider logget ennå',history:'Historikk',stats7:'Siste 7 dager',avgCal:'Snitt kcal/dag',streak:'Streak',days:'dager',editGoals:'Endre mål',reset:'Tilbakestill alt',remaining:'igjen',over:'over',foodName:'Matnavn',portion:'Porsjon (g)',calories:'Kalorier',save:'Lagre',cancel:'Avbryt',aiGuess:'AI gjettet:',editHint:'Du kan endre alt før du lagrer',analyzing:'Analyserer bildet med AI…',exerciseType:'Type',duration:'Varighet (min)',boxing:'Boksing',running:'Løping',strength:'Styrke',cardio:'Kondis',other:'Annet',noHistory:'Ingen historikk ennå',takePhoto:'Ta bilde',choosePhoto:'Velg fra galleri',noApiKey:'Du trenger en OpenAI API-nøkkel for bildegjenkjenning. Legg den inn under Profil.',scanningBarcode:'Skanner etter strekkode…',barcodeFound:'Fant produkt! Henter info…',barcodeNotFound:'Fant ikke produktet. Prøv å søke etter navn.',barcodeError:'Kunne ikke lese strekkoden.',apiExplain:'For at bildegjenkjenning skal fungere trenger du en OpenAI API-nøkkel. Strekkodeskanneren fungerer uten.',apiNote:'Nøkkelen lagres kun lokalt i denne nettleseren.',apiSaved:'Nøkkel lagret!',apiRemoved:'Nøkkel fjernet',enterBarcode:'Skriv inn strekkode:',lookupBarcode:'Søk',searchProduct:'Søk etter matvare',searchPlaceholder:'F.eks. "Grandiosa", "melk", "havregryn"…',searching:'Søker…',noResults:'Ingen resultater. Prøv et annet søkeord.',todayLabel:'I dag',yesterdayLabel:'I går',perGlass:'1 glass = 2.5 dl',quickAdd:'Rask-logg',noFavs:'Logg noe mat først, så dukker favorittene opp her'},en:{welcome:'Welcome to MacroLog',welcomeSub:'Set up your goals to get started.',age:'Age',sex:'Sex',male:'Male',female:'Female',height:'Height (cm)',weight:'Weight (kg)',target:'Target weight (kg)',weeks:'Weeks',activity:'Activity level',sed:'Sedentary',light:'Lightly active',mod:'Moderately active (3-5x/week)',very:'Very active',start:'Start',home:'Today',log:'Log',stats:'Stats',profile:'Profile',today:'Today',protein:'Protein',carbs:'Carbs',fat:'Fat',addFood:'Add food',photo2:'Photo',barcode2:'Barcode',manual2:'Manual',water:'Water',exercise:'Exercise',add:'+ Add',meals:"Today's meals",noMeals:'No meals logged yet',history:'History',stats7:'Last 7 days',avgCal:'Avg kcal/day',streak:'Streak',days:'days',editGoals:'Edit goals',reset:'Reset everything',remaining:'left',over:'over',foodName:'Food name',portion:'Portion (g)',calories:'Calories',save:'Save',cancel:'Cancel',aiGuess:'AI guessed:',editHint:'You can edit everything before saving',analyzing:'Analyzing image with AI…',exerciseType:'Type',duration:'Duration (min)',boxing:'Boxing',running:'Running',strength:'Strength',cardio:'Cardio',other:'Other',noHistory:'No history yet',takePhoto:'Take photo',choosePhoto:'Choose from gallery',noApiKey:'You need an OpenAI API key for image recognition. Add it under Profile.',scanningBarcode:'Scanning for barcode…',barcodeFound:'Product found!',barcodeNotFound:'Product not found. Try searching by name.',barcodeError:'Could not read barcode.',apiExplain:'Image recognition requires an OpenAI API key. The barcode scanner works without one.',apiNote:'The key is stored only in this browser.',apiSaved:'Key saved!',apiRemoved:'Key removed',enterBarcode:'Enter barcode:',lookupBarcode:'Look up',searchProduct:'Search for food',searchPlaceholder:'E.g. "pizza", "milk", "oatmeal"…',searching:'Searching…',noResults:'No results. Try a different term.',todayLabel:'Today',yesterdayLabel:'Yesterday',perGlass:'1 glass = 2.5 dl',quickAdd:'Quick-log',noFavs:'Log some food first, then favorites appear here'}};
 let lang='no',state=loadState(),viewingDate=todayKey();
 function loadState(){try{const r=localStorage.getItem('macrolog_v3');if(r)return JSON.parse(r);}catch(e){}return{profile:null,days:{},apiKey:''};}
 function save(){try{localStorage.setItem('macrolog_v3',JSON.stringify(state));}catch(e){}clearTimeout(syncTimer);syncTimer=setTimeout(()=>pushToCloud(),2000);}
@@ -416,6 +438,9 @@ function render(){
   document.getElementById('water-total').textContent=(day.water*2.5/10).toFixed(1)+' / 2.0 L';
   document.getElementById('exercise-list').innerHTML=day.exercises.length===0?'<div class="empty" style="padding:12px 0;">—</div>':day.exercises.map((e,i)=>`<div class="food-item"><div><div class="food-name">${esc(e.name)}</div><div class="food-meta">${e.duration} min · +${Math.round(e.burned)} kcal</div></div><button class="delete" onclick="delExercise(${i})">×</button></div>`).join('');
   document.getElementById('meals-list').innerHTML=day.meals.length===0?'<div class="empty">'+t('noMeals')+'</div>':day.meals.map((m,i)=>`<div class="food-item"><div style="flex:1;"><div class="food-name">${esc(m.name)}</div><div class="food-meta">${m.portion}g · ${Math.round(m.cal)} kcal</div><div class="macro-pills"><span class="pill pill-p">P ${Math.round(m.p)}g</span><span class="pill pill-c">C ${Math.round(m.c)}g</span><span class="pill pill-f">F ${Math.round(m.f)}g</span></div></div><button class="delete" onclick="delMeal(${i})">×</button></div>`).join('');
+  renderDailyScore(cal,p,c,f,g,adj);
+  renderStreak();
+  renderFavorites();
 }
 function delMeal(i){getDay(viewingDate).meals.splice(i,1);save();render();}
 function delExercise(i){getDay(viewingDate).exercises.splice(i,1);save();render();}
@@ -496,6 +521,90 @@ async function searchProducts(q){const box=document.getElementById('search-resul
 function pickSearchResult(i){if(window._sr&&window._sr[i])openProductResult(window._sr[i]);}
 function openExerciseModal(){modal(`<h3>${t('exercise')}</h3><label class="label">${t('exerciseType')}</label><select class="input" id="ex-type"><option value="boxing|11">${t('boxing')}</option><option value="running|10">${t('running')}</option><option value="strength|6">${t('strength')}</option><option value="cardio|8">${t('cardio')}</option><option value="other|5">${t('other')}</option></select><div class="row" style="margin-top:8px;"><div style="flex:1;"><label class="label">${t('duration')}</label><input class="input" id="ex-dur" type="number" value="60"/></div></div><div class="row" style="margin-top:12px;"><button class="btn" style="flex:1;" onclick="closeModal()">${t('cancel')}</button><button class="btn btn-primary" style="flex:1;" onclick="saveExercise()">${t('save')}</button></div>`);}
 function saveExercise(){const[type,met]=document.getElementById('ex-type').value.split('|');const dur=+document.getElementById('ex-dur').value||0;const burned=(+met)*state.profile.weight*(dur/60);const nm={boxing:t('boxing'),running:t('running'),strength:t('strength'),cardio:t('cardio'),other:t('other')};getDay(viewingDate).exercises.push({name:nm[type],duration:dur,burned});save();closeModal();render();}
+/* ========== DAILY SCORE ========== */
+function renderDailyScore(cal,p,c,f,g,adj){
+  const wrap=document.getElementById('daily-score-wrap');
+  const pctCal=Math.min(1,cal/adj);
+  const pctP=Math.min(1,p/g.p);
+  const pctC=Math.min(1,c/g.c);
+  const pctF=Math.min(1,f/g.f);
+  /* Overshot penalty: if you go over 110% on anything, score drops */
+  const penCal=cal>adj*1.1?Math.max(0,1-(cal-adj*1.1)/(adj*0.3)):1;
+  const score=Math.round(((pctCal+pctP+pctC+pctF)/4)*100*Math.min(penCal,1));
+  const color=score>=80?'#1D9E75':score>=50?'#EF9F27':'#E24B4A';
+  const emoji=score>=90?'🔥':score>=70?'💪':score>=40?'👍':'🎯';
+  const label=lang==='no'?'Daglig score':'Daily score';
+  wrap.innerHTML=`<div class="score-bar"><div class="score-fill" style="width:${score}%;background:${color};"></div></div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;"><span class="score-label">${label}</span><span style="font-size:18px;font-weight:600;color:${color};">${emoji} ${score}%</span></div>`;
+}
+
+/* ========== STREAK ========== */
+function calcStreak(){
+  let streak=0;
+  const d=new Date();
+  /* Start from yesterday if today has no meals yet */
+  const todayDay=getDay(todayKey());
+  if(todayDay.meals.length===0){d.setDate(d.getDate()-1);}
+  while(true){
+    const k=d.toISOString().slice(0,10);
+    const day=state.days[k];
+    if(day&&day.meals&&day.meals.length>0){streak++;d.setDate(d.getDate()-1);}
+    else break;
+    if(streak>999)break;
+  }
+  /* If today has meals, count today too */
+  if(todayDay.meals.length>0&&streak===0)streak=1;
+  return streak;
+}
+function renderStreak(){
+  const wrap=document.getElementById('streak-card-wrap');
+  const streak=calcStreak();
+  const badges=[
+    {d:3,emoji:'🌱',no:'Nybegynner',en:'Beginner'},
+    {d:7,emoji:'⭐',no:'1 uke!',en:'1 week!'},
+    {d:14,emoji:'💪',no:'2 uker!',en:'2 weeks!'},
+    {d:30,emoji:'🔥',no:'1 måned!',en:'1 month!'},
+    {d:60,emoji:'🏆',no:'2 måneder!',en:'2 months!'},
+    {d:100,emoji:'👑',no:'100 dager!',en:'100 days!'}
+  ];
+  const streakLabel=lang==='no'?'dager på rad':'day streak';
+  const badgesHtml=badges.map(b=>{
+    const earned=streak>=b.d;
+    return `<span class="streak-badge ${earned?'earned':'locked'}">${b.emoji} ${lang==='no'?b.no:b.en}</span>`;
+  }).join(' ');
+  const fire=streak>=7?'🔥':streak>=3?'⭐':'📅';
+  wrap.innerHTML=`<div class="streak-card"><div class="streak-fire">${fire}</div><div class="streak-count">${streak}</div><div class="streak-label">${streakLabel}</div><div style="margin-top:8px;">${badgesHtml}</div></div>`;
+}
+
+/* ========== FAVORITES ========== */
+function getFavorites(){
+  const counts={};
+  Object.values(state.days).forEach(day=>{
+    if(!day.meals)return;
+    day.meals.forEach(m=>{
+      const key=m.name.toLowerCase().trim();
+      if(!key||key==='?')return;
+      if(!counts[key]){counts[key]={name:m.name,cal:m.cal,p:m.p,c:m.c,f:m.f,portion:m.portion,count:0};}
+      counts[key].count++;
+      /* Keep latest values */
+      counts[key].cal=m.cal;counts[key].p=m.p;counts[key].c=m.c;counts[key].f=m.f;counts[key].portion=m.portion;
+    });
+  });
+  return Object.values(counts).sort((a,b)=>b.count-a.count).slice(0,8);
+}
+function renderFavorites(){
+  const wrap=document.getElementById('favorites-list');
+  const favs=getFavorites();
+  if(favs.length===0){wrap.innerHTML=`<div class="empty" style="padding:12px 0;">${lang==='no'?'Logg noe mat først, så dukker favorittene opp her':'Log some food first, then favorites appear here'}</div>`;return;}
+  wrap.innerHTML=favs.map((f,i)=>`<div class="fav-item" onclick="quickAddFav(${i})"><div><div class="food-name">${esc(f.name)}</div><div class="food-meta">${f.portion}g · ${Math.round(f.cal)} kcal · P${Math.round(f.p)}g</div></div><div style="font-size:11px;color:#378ADD;">+ ${lang==='no'?'Legg til':'Add'}</div></div>`).join('');
+  window._favs=favs;
+}
+function quickAddFav(i){
+  const f=window._favs[i];
+  if(!f)return;
+  getDay(viewingDate).meals.push({name:f.name,portion:f.portion,cal:f.cal,p:f.p,c:f.c,f:f.f,time:Date.now()});
+  save();render();
+}
+
 function renderHistory(){const h=document.getElementById('history-list');const days=Object.keys(state.days).sort().reverse();if(days.length===0){h.innerHTML='<div class="empty">'+t('noHistory')+'</div>';return;}h.innerHTML=days.map(d=>{const day=state.days[d];let cal=0;day.meals.forEach(m=>cal+=m.cal);const dt=new Date(d+'T12:00:00').toLocaleDateString(lang==='no'?'no-NO':'en-US',{weekday:'short',day:'numeric',month:'short'});const mh=day.meals.map(m=>`<div style="font-size:13px;color:#666;padding:4px 0;">· ${esc(m.name)} — ${Math.round(m.cal)} kcal</div>`).join('');return`<div style="margin-bottom:16px;cursor:pointer;" onclick="viewingDate='${d}';switchView('home');"><div style="font-weight:500;font-size:14px;">${dt} <span style="color:#666;font-weight:400;font-size:12px;">(${Math.round(cal)} kcal)</span> <span style="font-size:11px;color:#378ADD;">→</span></div>${mh||'<div class="empty" style="padding:4px 0;">—</div>'}</div>`;}).join('');}
 function renderStats(){const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=d.toISOString().slice(0,10);const day=state.days[k]||{meals:[]};let cal=0;day.meals.forEach(m=>cal+=m.cal);days.push({label:d.toLocaleDateString(lang==='no'?'no-NO':'en-US',{weekday:'short'}),cal});}const max=Math.max(state.profile.goals.cal*1.2,...days.map(d=>d.cal));const barW=40,gap=16,startX=30,goalY=140-(state.profile.goals.cal/max)*120;let html=`<line x1="20" y1="${goalY}" x2="400" y2="${goalY}" stroke="#378ADD" stroke-width="1" stroke-dasharray="4 3"/><text x="400" y="${goalY-4}" text-anchor="end" font-size="10" fill="#378ADD">${state.profile.goals.cal} kcal</text>`;days.forEach((d,i)=>{const h=(d.cal/max)*120,x=startX+i*(barW+gap);html+=`<rect x="${x}" y="${140-h}" width="${barW}" height="${h}" fill="#B5D4F4" rx="3"/><text x="${x+barW/2}" y="158" text-anchor="middle" font-size="11" fill="#666">${d.label}</text>`;if(d.cal>0)html+=`<text x="${x+barW/2}" y="${140-h-4}" text-anchor="middle" font-size="10" fill="currentColor">${Math.round(d.cal)}</text>`;});document.getElementById('weekly-chart').innerHTML=html;const logged=days.filter(d=>d.cal>0);document.getElementById('stat-avg-cal').textContent=logged.length?Math.round(logged.reduce((s,d)=>s+d.cal,0)/logged.length):0;let streak=0;for(let i=days.length-1;i>=0;i--){if(days[i].cal>0)streak++;else break;}document.getElementById('stat-streak').textContent=streak+' '+t('days');}
 function renderProfile(){const p=state.profile,g=p.goals;const goalNames={no:{lose_weight:'Ned i vekt',lose_fat:'Kutte fett',lean_bulk:'Lean bulk',bulk:'Bulking',gain_weight:'Opp i vekt',maintain:'Vedlikehold'},en:{lose_weight:'Lose weight',lose_fat:'Cut fat',lean_bulk:'Lean bulk',bulk:'Bulking',gain_weight:'Gain weight',maintain:'Maintain'}};const goalName=(goalNames[lang]||goalNames.no)[p.goal||'maintain']||'';
