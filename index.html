@@ -121,6 +121,9 @@
     .day-nav-sub { color: #999; }
     .search-result:hover { background: #222; }
     .search-results-box { border-color: rgba(255,255,255,0.1); }
+    .qty-btn { background: #222; color: #f0f0f0; border-color: rgba(255,255,255,0.15); }
+    .streak-badge.locked { background: #222; color: #555; }
+    .fav-item:hover { background: rgba(255,255,255,0.03); }
   }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -440,12 +443,43 @@ function render(){
   document.getElementById('water-dl-label').textContent=t('perGlass');
   document.getElementById('water-total').textContent=(day.water*2.5/10).toFixed(1)+' / 2.0 L';
   document.getElementById('exercise-list').innerHTML=day.exercises.length===0?'<div class="empty" style="padding:12px 0;">—</div>':day.exercises.map((e,i)=>`<div class="food-item"><div><div class="food-name">${esc(e.name)}</div><div class="food-meta">${e.duration} min · +${Math.round(e.burned)} kcal</div></div><button class="delete" onclick="delExercise(${i})">×</button></div>`).join('');
-  document.getElementById('meals-list').innerHTML=day.meals.length===0?'<div class="empty">'+t('noMeals')+'</div>':day.meals.map((m,i)=>`<div class="food-item"><div style="flex:1;"><div class="food-name">${esc(m.name)}</div><div class="food-meta">${m.portion}g · ${Math.round(m.cal)} kcal</div><div class="macro-pills"><span class="pill pill-p">P ${Math.round(m.p)}g</span><span class="pill pill-c">C ${Math.round(m.c)}g</span><span class="pill pill-f">F ${Math.round(m.f)}g</span></div></div><button class="delete" onclick="delMeal(${i})">×</button></div>`).join('');
+  document.getElementById('meals-list').innerHTML=day.meals.length===0?'<div class="empty">'+t('noMeals')+'</div>':day.meals.map((m,i)=>{const q=m.qty||1;return`<div class="food-item"><div style="flex:1;cursor:pointer;" onclick="editMeal(${i})"><div class="food-name">${esc(m.name)} <span style="font-size:11px;color:#378ADD;">✎</span></div><div class="food-meta">${m.portion}g${q>1?' × '+q:''} · ${Math.round(m.cal*q)} kcal</div><div class="macro-pills"><span class="pill pill-p">P ${Math.round(m.p*q)}g</span><span class="pill pill-c">C ${Math.round(m.c*q)}g</span><span class="pill pill-f">F ${Math.round(m.f*q)}g</span></div></div><div style="display:flex;align-items:center;gap:4px;"><div class="qty-controls"><button class="qty-btn" onclick="changeQty(${i},-1)">−</button><span class="qty-num">${q}</span><button class="qty-btn" onclick="changeQty(${i},1)">+</button></div><button class="delete" onclick="delMeal(${i})">×</button></div></div>`;}).join('');
   renderDailyScore(cal,p,c,f,g,adj);
   renderStreak();
   renderFavorites();
 }
 function delMeal(i){getDay(viewingDate).meals.splice(i,1);save();render();}
+function changeQty(i,delta){const day=getDay(viewingDate);const m=day.meals[i];if(!m)return;const q=(m.qty||1)+delta;if(q<1){day.meals.splice(i,1);}else{m.qty=q;}save();render();}
+function editMeal(i){
+  const day=getDay(viewingDate);const m=day.meals[i];if(!m)return;
+  const editTitle=lang==='no'?'Rediger måltid':'Edit meal';
+  const saveLabel=lang==='no'?'Oppdater':'Update';
+  modal(`<h3>✎ ${editTitle}</h3>
+    <label class="label">${t('foodName')}</label><input class="input" id="m-name" value="${esc(m.name)}"/>
+    <div class="row" style="margin-top:8px;">
+      <div style="flex:1;"><label class="label">${t('portion')}</label><input class="input" id="m-portion" type="number" value="${m.portion}"/></div>
+      <div style="flex:1;"><label class="label">${t('calories')}</label><input class="input" id="m-cal" type="number" value="${Math.round(m.cal)}"/></div>
+    </div>
+    <div class="row">
+      <div style="flex:1;"><label class="label">${t('protein')}</label><input class="input" id="m-p" type="number" step="0.1" value="${Math.round(m.p*10)/10}"/></div>
+      <div style="flex:1;"><label class="label">${t('carbs')}</label><input class="input" id="m-c" type="number" step="0.1" value="${Math.round(m.c*10)/10}"/></div>
+      <div style="flex:1;"><label class="label">${t('fat')}</label><input class="input" id="m-f" type="number" step="0.1" value="${Math.round(m.f*10)/10}"/></div>
+    </div>
+    <div class="row" style="margin-top:12px;">
+      <button class="btn" style="flex:1;" onclick="closeModal()">${t('cancel')}</button>
+      <button class="btn btn-primary" style="flex:1;" onclick="saveEditMeal(${i})">${saveLabel}</button>
+    </div>`);
+}
+function saveEditMeal(i){
+  const day=getDay(viewingDate);const m=day.meals[i];if(!m)return;
+  m.name=document.getElementById('m-name').value||'?';
+  m.portion=+document.getElementById('m-portion').value||0;
+  m.cal=+document.getElementById('m-cal').value||0;
+  m.p=+document.getElementById('m-p').value||0;
+  m.c=+document.getElementById('m-c').value||0;
+  m.f=+document.getElementById('m-f').value||0;
+  save();closeModal();render();
+}
 function delExercise(i){getDay(viewingDate).exercises.splice(i,1);save();render();}
 function modal(html){document.getElementById('modal-root').innerHTML='<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal">'+html+'</div></div>';}
 function closeModal(){stopBarcodeScanner();document.getElementById('modal-root').innerHTML='';}
@@ -486,7 +520,7 @@ async function recalcFromName(){
   if(btn){btn.disabled=false;btn.innerHTML='🔄 '+(lang==='no'?'Beregn på nytt':'Recalculate');}
   }catch(err){if(btn){btn.disabled=false;btn.innerHTML='❌ '+(lang==='no'?'Feilet — prøv igjen':'Failed — try again');}}
 }
-function saveMeal(){const m={name:document.getElementById('m-name').value||'?',portion:+document.getElementById('m-portion').value||0,cal:+document.getElementById('m-cal').value||0,p:+document.getElementById('m-p').value||0,c:+document.getElementById('m-c').value||0,f:+document.getElementById('m-f').value||0,time:Date.now()};getDay(viewingDate).meals.push(m);save();closeModal();render();}
+function saveMeal(){const m={name:document.getElementById('m-name').value||'?',portion:+document.getElementById('m-portion').value||0,cal:+document.getElementById('m-cal').value||0,p:+document.getElementById('m-p').value||0,c:+document.getElementById('m-c').value||0,f:+document.getElementById('m-f').value||0,qty:1,time:Date.now()};getDay(viewingDate).meals.push(m);save();closeModal();render();}
 function openPhotoModal(){
   if(!state.apiKey){modal(`<h3>📷 ${t('photo2')}</h3><div class="status-msg error">${t('noApiKey')}</div><button class="btn" style="width:100%;margin-top:12px;" onclick="closeModal()">${t('cancel')}</button>`);return;}
   modal(`<h3>📷 ${t('photo2')}</h3><div style="display:flex;gap:8px;margin:12px 0;"><button class="btn btn-primary" style="flex:1;" onclick="document.getElementById('photo-input').click()">${t('takePhoto')}</button><button class="btn" style="flex:1;" onclick="document.getElementById('gallery-input').click()">${t('choosePhoto')}</button></div><button class="btn" style="width:100%;" onclick="closeModal()">${t('cancel')}</button>`);
@@ -608,8 +642,8 @@ function quickAddFav(i){
   save();render();
 }
 
-function renderHistory(){const h=document.getElementById('history-list');const days=Object.keys(state.days).sort().reverse();if(days.length===0){h.innerHTML='<div class="empty">'+t('noHistory')+'</div>';return;}h.innerHTML=days.map(d=>{const day=state.days[d];let cal=0;day.meals.forEach(m=>cal+=m.cal);const dt=new Date(d+'T12:00:00').toLocaleDateString(lang==='no'?'no-NO':'en-US',{weekday:'short',day:'numeric',month:'short'});const mh=day.meals.map(m=>`<div style="font-size:13px;color:#666;padding:4px 0;">· ${esc(m.name)} — ${Math.round(m.cal)} kcal</div>`).join('');return`<div style="margin-bottom:16px;cursor:pointer;" onclick="viewingDate='${d}';switchView('home');"><div style="font-weight:500;font-size:14px;">${dt} <span style="color:#666;font-weight:400;font-size:12px;">(${Math.round(cal)} kcal)</span> <span style="font-size:11px;color:#378ADD;">→</span></div>${mh||'<div class="empty" style="padding:4px 0;">—</div>'}</div>`;}).join('');}
-function renderStats(){const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=d.toISOString().slice(0,10);const day=state.days[k]||{meals:[]};let cal=0;day.meals.forEach(m=>cal+=m.cal);days.push({label:d.toLocaleDateString(lang==='no'?'no-NO':'en-US',{weekday:'short'}),cal});}const max=Math.max(state.profile.goals.cal*1.2,...days.map(d=>d.cal));const barW=40,gap=16,startX=30,goalY=140-(state.profile.goals.cal/max)*120;let html=`<line x1="20" y1="${goalY}" x2="400" y2="${goalY}" stroke="#378ADD" stroke-width="1" stroke-dasharray="4 3"/><text x="400" y="${goalY-4}" text-anchor="end" font-size="10" fill="#378ADD">${state.profile.goals.cal} kcal</text>`;days.forEach((d,i)=>{const h=(d.cal/max)*120,x=startX+i*(barW+gap);html+=`<rect x="${x}" y="${140-h}" width="${barW}" height="${h}" fill="#B5D4F4" rx="3"/><text x="${x+barW/2}" y="158" text-anchor="middle" font-size="11" fill="#666">${d.label}</text>`;if(d.cal>0)html+=`<text x="${x+barW/2}" y="${140-h-4}" text-anchor="middle" font-size="10" fill="currentColor">${Math.round(d.cal)}</text>`;});document.getElementById('weekly-chart').innerHTML=html;const logged=days.filter(d=>d.cal>0);document.getElementById('stat-avg-cal').textContent=logged.length?Math.round(logged.reduce((s,d)=>s+d.cal,0)/logged.length):0;let streak=0;for(let i=days.length-1;i>=0;i--){if(days[i].cal>0)streak++;else break;}document.getElementById('stat-streak').textContent=streak+' '+t('days');}
+function renderHistory(){const h=document.getElementById('history-list');const days=Object.keys(state.days).sort().reverse();if(days.length===0){h.innerHTML='<div class="empty">'+t('noHistory')+'</div>';return;}h.innerHTML=days.map(d=>{const day=state.days[d];let cal=0;day.meals.forEach(m=>cal+=m.cal*(m.qty||1));const dt=new Date(d+'T12:00:00').toLocaleDateString(lang==='no'?'no-NO':'en-US',{weekday:'short',day:'numeric',month:'short'});const mh=day.meals.map(m=>{const q=m.qty||1;return`<div style="font-size:13px;color:#666;padding:4px 0;">· ${esc(m.name)}${q>1?' ×'+q:''} — ${Math.round(m.cal*q)} kcal</div>`;}).join('');return`<div style="margin-bottom:16px;cursor:pointer;" onclick="viewingDate='${d}';switchView('home');"><div style="font-weight:500;font-size:14px;">${dt} <span style="color:#666;font-weight:400;font-size:12px;">(${Math.round(cal)} kcal)</span> <span style="font-size:11px;color:#378ADD;">→</span></div>${mh||'<div class="empty" style="padding:4px 0;">—</div>'}</div>`;}).join('');}
+function renderStats(){const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=d.toISOString().slice(0,10);const day=state.days[k]||{meals:[]};let cal=0;day.meals.forEach(m=>cal+=m.cal*(m.qty||1));days.push({label:d.toLocaleDateString(lang==='no'?'no-NO':'en-US',{weekday:'short'}),cal});}const max=Math.max(state.profile.goals.cal*1.2,...days.map(d=>d.cal));const barW=40,gap=16,startX=30,goalY=140-(state.profile.goals.cal/max)*120;let html=`<line x1="20" y1="${goalY}" x2="400" y2="${goalY}" stroke="#378ADD" stroke-width="1" stroke-dasharray="4 3"/><text x="400" y="${goalY-4}" text-anchor="end" font-size="10" fill="#378ADD">${state.profile.goals.cal} kcal</text>`;days.forEach((d,i)=>{const h=(d.cal/max)*120,x=startX+i*(barW+gap);html+=`<rect x="${x}" y="${140-h}" width="${barW}" height="${h}" fill="#B5D4F4" rx="3"/><text x="${x+barW/2}" y="158" text-anchor="middle" font-size="11" fill="#666">${d.label}</text>`;if(d.cal>0)html+=`<text x="${x+barW/2}" y="${140-h-4}" text-anchor="middle" font-size="10" fill="currentColor">${Math.round(d.cal)}</text>`;});document.getElementById('weekly-chart').innerHTML=html;const logged=days.filter(d=>d.cal>0);document.getElementById('stat-avg-cal').textContent=logged.length?Math.round(logged.reduce((s,d)=>s+d.cal,0)/logged.length):0;let streak=0;for(let i=days.length-1;i>=0;i--){if(days[i].cal>0)streak++;else break;}document.getElementById('stat-streak').textContent=streak+' '+t('days');}
 function renderProfile(){const p=state.profile,g=p.goals;const goalNames={no:{lose_weight:'Ned i vekt',lose_fat:'Kutte fett',lean_bulk:'Lean bulk',bulk:'Bulking',gain_weight:'Opp i vekt',maintain:'Vedlikehold'},en:{lose_weight:'Lose weight',lose_fat:'Cut fat',lean_bulk:'Lean bulk',bulk:'Bulking',gain_weight:'Gain weight',maintain:'Maintain'}};const goalName=(goalNames[lang]||goalNames.no)[p.goal||'maintain']||'';
   const ssb=document.getElementById('sync-status-bar');
   if(currentUser){ssb.innerHTML=`<div style="font-size:12px;color:#666;">📧 ${esc(currentUser.email)} <span class="sync-badge">Synkronisert</span></div>`;}
