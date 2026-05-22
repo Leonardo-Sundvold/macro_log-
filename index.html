@@ -161,6 +161,7 @@
 <div id="main" style="display:none;">
   <div class="tabbar">
     <div class="tab active" data-view="home" onclick="switchView('home')" data-i18n="home">I dag</div>
+    <div class="tab" data-view="plan" onclick="switchView('plan')">🍽️ Plan</div>
     <div class="tab" data-view="log" onclick="switchView('log')" data-i18n="log">Logg</div>
     <div class="tab" data-view="stats" onclick="switchView('stats')" data-i18n="stats">Statistikk</div>
     <div class="tab" data-view="profile" onclick="switchView('profile')" data-i18n="profile">Profil</div>
@@ -224,8 +225,38 @@
       <div id="meals-list"><div class="empty" data-i18n="noMeals">Ingen måltider logget ennå</div></div>
     </div>
   </div>
+  <div id="view-plan" style="display:none;">
+    <div class="card">
+      <h2>🍽️ Daglig matplan</h2>
+      <p style="font-size:12px;color:#7A6F62;margin:0 0 12px;line-height:1.5;" id="plan-subtitle">En personlig matplan basert på målene dine og maten du liker.</p>
+      <div id="plan-content"><div class="empty">Trykk knappen under for å generere din plan</div></div>
+      <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="generatePlan()" id="plan-gen-btn">✨ Generer matplan</button>
+      <p style="font-size:10px;color:#5C5347;margin-top:8px;text-align:center;" id="plan-note">Bruker AI til å lage en plan tilpasset dine mål og preferanser</p>
+    </div>
+    <div class="card" id="plan-tips-card">
+      <h3>💡 Ukens innsikt</h3>
+      <div id="weekly-insights"><div class="empty">Logg mat i noen dager for å se innsikt her</div></div>
+    </div>
+  </div>
   <div id="view-log" style="display:none;"><div class="card"><h2 data-i18n="history">Historikk</h2><div id="history-list"></div></div></div>
-  <div id="view-stats" style="display:none;"><div class="card"><h2 data-i18n="stats7">Siste 7 dager</h2><svg id="weekly-chart" width="100%" height="180" viewBox="0 0 420 180"></svg><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;"><div class="metric"><div class="metric-label" data-i18n="avgCal">Snitt kcal/dag</div><div class="metric-value" id="stat-avg-cal">0</div></div><div class="metric"><div class="metric-label" data-i18n="streak">Streak</div><div class="metric-value" id="stat-streak">0</div></div></div></div></div>
+  <div id="view-stats" style="display:none;">
+    <div class="card">
+      <h2 data-i18n="stats7">Siste 7 dager</h2>
+      <svg id="weekly-chart" width="100%" height="180" viewBox="0 0 420 180"></svg>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
+        <div class="metric"><div class="metric-label" data-i18n="avgCal">Snitt kcal/dag</div><div class="metric-value" id="stat-avg-cal">0</div></div>
+        <div class="metric"><div class="metric-label" data-i18n="streak">Streak</div><div class="metric-value" id="stat-streak">0</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3>⚖️ Vektlogg</h3>
+        <button class="btn" style="padding:4px 10px;font-size:12px;" onclick="openWeightModal()">+ Logg vekt</button>
+      </div>
+      <svg id="weight-chart" width="100%" height="140" viewBox="0 0 420 140"></svg>
+      <div id="weight-list" style="margin-top:8px;"></div>
+    </div>
+  </div>
   <div id="view-profile" style="display:none;"><div class="card"><h2 data-i18n="profile">Profil</h2><div id="sync-status-bar" style="margin-bottom:12px;"></div><div id="profile-info"></div><button class="btn" style="width:100%;margin-top:12px;" onclick="editProfile()" data-i18n="editGoals">Endre mål</button><div style="margin-top:8px;"><label class="label">OpenAI API-nøkkel</label><div class="api-key-row"><input type="password" class="input" id="api-key-profile" style="font-size:12px;" placeholder="sk-..."/><button class="btn" style="white-space:nowrap;font-size:12px;" onclick="saveApiKeyProfile()">Lagre</button></div><p style="font-size:11px;color:#7A6F62;margin:4px 0 0;" id="api-status"></p></div><button class="btn" style="width:100%;margin-top:12px;" id="auth-logout-btn" onclick="authLogout()">Logg ut</button><button class="btn" style="width:100%;margin-top:8px;" onclick="resetAll()" data-i18n="reset">Tilbakestill alt</button></div></div>
 </div>
 <div id="modal-root"></div>
@@ -324,7 +355,7 @@ const _origSave=save;
 <script>
 const i18n={no:{welcome:'Velkommen til MacroLog',welcomeSub:'Sett opp målene dine for å komme i gang.',age:'Alder',sex:'Kjønn',male:'Mann',female:'Kvinne',height:'Høyde (cm)',weight:'Vekt (kg)',target:'Målvekt (kg)',weeks:'Uker',activity:'Aktivitetsnivå',sed:'Stillesittende',light:'Lett aktiv',mod:'Moderat aktiv (trening 3-5 ganger/uke)',very:'Veldig aktiv',start:'Start',home:'I dag',log:'Logg',stats:'Statistikk',profile:'Profil',today:'I dag',protein:'Protein',carbs:'Karbo',fat:'Fett',addFood:'Legg til mat',photo2:'Bilde',barcode2:'Strekkode',manual2:'Manuelt',water:'Vann',exercise:'Trening',add:'+ Legg til',meals:'Dagens måltider',noMeals:'Ingen måltider logget ennå',history:'Historikk',stats7:'Siste 7 dager',avgCal:'Snitt kcal/dag',streak:'Streak',days:'dager',editGoals:'Endre mål',reset:'Tilbakestill alt',remaining:'igjen',over:'over',foodName:'Matnavn',portion:'Porsjon (g)',calories:'Kalorier',save:'Lagre',cancel:'Avbryt',aiGuess:'AI gjettet:',editHint:'Du kan endre alt før du lagrer',analyzing:'Analyserer bildet med AI…',exerciseType:'Type',duration:'Varighet (min)',boxing:'Boksing',running:'Løping',strength:'Styrke',cardio:'Kondis',other:'Annet',noHistory:'Ingen historikk ennå',takePhoto:'Ta bilde',choosePhoto:'Velg fra galleri',noApiKey:'Du trenger en OpenAI API-nøkkel for bildegjenkjenning. Legg den inn under Profil.',scanningBarcode:'Skanner etter strekkode…',barcodeFound:'Fant produkt! Henter info…',barcodeNotFound:'Fant ikke produktet. Prøv å søke etter navn.',barcodeError:'Kunne ikke lese strekkoden.',apiExplain:'For at bildegjenkjenning skal fungere trenger du en OpenAI API-nøkkel. Strekkodeskanneren fungerer uten.',apiNote:'Nøkkelen lagres kun lokalt i denne nettleseren.',apiSaved:'Nøkkel lagret!',apiRemoved:'Nøkkel fjernet',enterBarcode:'Skriv inn strekkode:',lookupBarcode:'Søk',searchProduct:'Søk etter matvare',searchPlaceholder:'F.eks. "Grandiosa", "melk", "havregryn"…',searching:'Søker…',noResults:'Ingen resultater. Prøv et annet søkeord.',todayLabel:'I dag',yesterdayLabel:'I går',perGlass:'1 glass = 2.5 dl',quickAdd:'Rask-logg',noFavs:'Logg noe mat først, så dukker favorittene opp her'},en:{welcome:'Welcome to MacroLog',welcomeSub:'Set up your goals to get started.',age:'Age',sex:'Sex',male:'Male',female:'Female',height:'Height (cm)',weight:'Weight (kg)',target:'Target weight (kg)',weeks:'Weeks',activity:'Activity level',sed:'Sedentary',light:'Lightly active',mod:'Moderately active (3-5x/week)',very:'Very active',start:'Start',home:'Today',log:'Log',stats:'Stats',profile:'Profile',today:'Today',protein:'Protein',carbs:'Carbs',fat:'Fat',addFood:'Add food',photo2:'Photo',barcode2:'Barcode',manual2:'Manual',water:'Water',exercise:'Exercise',add:'+ Add',meals:"Today's meals",noMeals:'No meals logged yet',history:'History',stats7:'Last 7 days',avgCal:'Avg kcal/day',streak:'Streak',days:'days',editGoals:'Edit goals',reset:'Reset everything',remaining:'left',over:'over',foodName:'Food name',portion:'Portion (g)',calories:'Calories',save:'Save',cancel:'Cancel',aiGuess:'AI guessed:',editHint:'You can edit everything before saving',analyzing:'Analyzing image with AI…',exerciseType:'Type',duration:'Duration (min)',boxing:'Boxing',running:'Running',strength:'Strength',cardio:'Cardio',other:'Other',noHistory:'No history yet',takePhoto:'Take photo',choosePhoto:'Choose from gallery',noApiKey:'You need an OpenAI API key for image recognition. Add it under Profile.',scanningBarcode:'Scanning for barcode…',barcodeFound:'Product found!',barcodeNotFound:'Product not found. Try searching by name.',barcodeError:'Could not read barcode.',apiExplain:'Image recognition requires an OpenAI API key. The barcode scanner works without one.',apiNote:'The key is stored only in this browser.',apiSaved:'Key saved!',apiRemoved:'Key removed',enterBarcode:'Enter barcode:',lookupBarcode:'Look up',searchProduct:'Search for food',searchPlaceholder:'E.g. "pizza", "milk", "oatmeal"…',searching:'Searching…',noResults:'No results. Try a different term.',todayLabel:'Today',yesterdayLabel:'Yesterday',perGlass:'1 glass = 2.5 dl',quickAdd:'Quick-log',noFavs:'Log some food first, then favorites appear here'}};
 let lang='no',state=loadState(),viewingDate=todayKey();
-function loadState(){try{const r=localStorage.getItem('macrolog_v3');if(r)return JSON.parse(r);}catch(e){}return{profile:null,days:{},apiKey:''};}
+function loadState(){try{const r=localStorage.getItem('macrolog_v3');if(r)return JSON.parse(r);}catch(e){}return{profile:null,days:{},apiKey:'',weightLog:[],currentPlan:null};}
 function save(){try{localStorage.setItem('macrolog_v3',JSON.stringify(state));}catch(e){}clearTimeout(syncTimer);syncTimer=setTimeout(()=>pushToCloud(),2000);}
 function t(k){return i18n[lang][k]||k;}
 function setLang(l){lang=l;document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.dataset.lang===l));applyI18n();render();}
@@ -402,7 +433,7 @@ function formatDaySub(dk){return new Date(dk+'T12:00:00').toLocaleDateString(lan
 function saveApiKey(){state.apiKey=document.getElementById('api-key-input').value.trim();save();document.getElementById('api-banner').style.display='none';render();}
 function saveApiKeyProfile(){const k=document.getElementById('api-key-profile').value.trim();state.apiKey=k;save();const s=document.getElementById('api-status');s.textContent=k?t('apiSaved'):t('apiRemoved');s.style.color=k?'#1D9E75':'#666';setTimeout(()=>s.textContent='',2000);}
 function finishOnboard(){const p={age:+document.getElementById('ob-age').value,sex:document.getElementById('ob-sex').value,height:+document.getElementById('ob-height').value,weight:+document.getElementById('ob-weight').value,target:+document.getElementById('ob-target').value,weeks:+document.getElementById('ob-weeks').value||12,activity:+document.getElementById('ob-activity').value,goal:document.getElementById('ob-goal').value};p.goals=calcGoals(p);state.profile=p;save();render();}
-function switchView(v){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));['home','log','stats','profile'].forEach(k=>{document.getElementById('view-'+k).style.display=k===v?'':'none';});if(v==='stats')renderStats();if(v==='log')renderHistory();if(v==='profile')renderProfile();}
+function switchView(v){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));['home','plan','log','stats','profile'].forEach(k=>{document.getElementById('view-'+k).style.display=k===v?'':'none';});if(v==='stats'){renderStats();renderWeightLog();}if(v==='log')renderHistory();if(v==='profile')renderProfile();if(v==='plan')renderPlan();}
 function render(){
   applyI18n();
   if(!state.profile){document.getElementById('onboard').style.display='';document.getElementById('main').style.display='none';document.getElementById('api-banner').style.display=!state.apiKey?'':'none';return;}
@@ -632,6 +663,189 @@ function renderProfile(){const p=state.profile,g=p.goals;const goalNames={no:{lo
   document.getElementById('profile-info').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="metric"><div class="metric-label">${lang==='no'?'Mål':'Goal'}</div><div class="metric-value" style="font-size:15px;">${goalName}</div></div><div class="metric"><div class="metric-label">TDEE</div><div class="metric-value">${g.tdee}</div><div class="metric-sub">kcal</div></div><div class="metric"><div class="metric-label">${t('calories')}</div><div class="metric-value">${g.cal}</div><div class="metric-sub">kcal/${lang==='no'?'dag':'day'} (${g.cal>g.tdee?'+':''}${g.cal-g.tdee})</div></div><div class="metric"><div class="metric-label">${t('protein')}</div><div class="metric-value">${g.p}g</div><div class="metric-sub">${g.proteinPerKg||'?'} g/kg · ${g.protPct||'?'}%</div></div><div class="metric"><div class="metric-label">${t('carbs')}</div><div class="metric-value">${g.c}g</div><div class="metric-sub">${g.carbPct||'?'}%</div></div><div class="metric"><div class="metric-label">${t('fat')}</div><div class="metric-value">${g.f}g</div><div class="metric-sub">${g.fatPct||'?'}%</div></div></div><div style="font-size:10px;color:#5C5347;margin-top:8px;line-height:1.5;">${lang==='no'?'BMR: Mifflin-St Jeor (1990). Protein: Schoenfeld & Aragon (2018), ISSN (2017). Fett: Helms et al. (2014). Kaloriunderskudd: Hall dynamisk modell (2008).':'BMR: Mifflin-St Jeor (1990). Protein: Schoenfeld & Aragon (2018), ISSN (2017). Fat: Helms et al. (2014). Deficit: Hall dynamic model (2008).'}</div>`;const ki=document.getElementById('api-key-profile');if(ki)ki.value=state.apiKey||'';}
 function editProfile(){state.profile=null;save();render();}
 function resetAll(){if(confirm(lang==='no'?'Slette alle data?':'Delete all data?')){state={profile:null,days:{},apiKey:state.apiKey};save();render();}}
+/* ========== WEIGHT LOG ========== */
+function openWeightModal(){
+  const current=state.profile?state.profile.weight:'';
+  modal(`<h3>⚖️ ${lang==='no'?'Logg vekt':'Log weight'}</h3>
+    <label class="label">${lang==='no'?'Vekt (kg)':'Weight (kg)'}</label>
+    <input class="input" id="w-kg" type="number" step="0.1" value="${current}"/>
+    <div class="row" style="margin-top:12px;">
+      <button class="btn" style="flex:1;" onclick="closeModal()">${t('cancel')}</button>
+      <button class="btn btn-primary" style="flex:1;" onclick="saveWeight()">${t('save')}</button>
+    </div>`);
+}
+function saveWeight(){
+  const kg=+document.getElementById('w-kg').value;
+  if(!kg)return;
+  if(!state.weightLog)state.weightLog=[];
+  state.weightLog.push({date:todayKey(),kg:kg});
+  if(state.profile)state.profile.weight=kg;
+  save();closeModal();renderWeightLog();renderStats();
+}
+function renderWeightLog(){
+  if(!state.weightLog||state.weightLog.length===0){
+    document.getElementById('weight-chart').innerHTML='';
+    document.getElementById('weight-list').innerHTML=`<div class="empty">${lang==='no'?'Ingen vektdata ennå':'No weight data yet'}</div>`;
+    return;
+  }
+  const logs=state.weightLog.slice(-14);
+  const min=Math.min(...logs.map(l=>l.kg))-1;
+  const max=Math.max(...logs.map(l=>l.kg))+1;
+  const range=max-min||1;
+  const svg=document.getElementById('weight-chart');
+  const w=400,h=110,px=30,py=10;
+  let html=`<line x1="${px}" y1="${py}" x2="${px}" y2="${h}" stroke="#2E2822" stroke-width="0.5"/>`;
+  html+=`<line x1="${px}" y1="${h}" x2="${w}" y2="${h}" stroke="#2E2822" stroke-width="0.5"/>`;
+  html+=`<text x="${px-4}" y="${py+8}" text-anchor="end" font-size="9" fill="#7A6F62">${max.toFixed(1)}</text>`;
+  html+=`<text x="${px-4}" y="${h-2}" text-anchor="end" font-size="9" fill="#7A6F62">${min.toFixed(1)}</text>`;
+  if(logs.length>1){
+    const step=(w-px-10)/(logs.length-1);
+    let path='M';
+    logs.forEach((l,i)=>{
+      const x=px+i*step;
+      const y=h-((l.kg-min)/range)*(h-py*2);
+      path+=(i===0?'':' L')+x.toFixed(1)+' '+y.toFixed(1);
+      html+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="#C8A97E"/>`;
+    });
+    html+=`<path d="${path}" fill="none" stroke="#C8A97E" stroke-width="2"/>`;
+  } else {
+    const x=px+10;const y=h/2;
+    html+=`<circle cx="${x}" cy="${y}" r="4" fill="#C8A97E"/>`;
+    html+=`<text x="${x+10}" y="${y+4}" font-size="12" fill="#E8E0D4">${logs[0].kg} kg</text>`;
+  }
+  svg.innerHTML=html;
+  const recent=logs.slice(-3).reverse();
+  document.getElementById('weight-list').innerHTML=recent.map(l=>{
+    const d=new Date(l.date+'T12:00:00').toLocaleDateString(lang==='no'?'no-NO':'en-US',{day:'numeric',month:'short'});
+    return `<div style="font-size:12px;color:#7A6F62;padding:2px 0;">${d}: <span style="color:#E8E0D4;">${l.kg} kg</span></div>`;
+  }).join('');
+}
+
+/* ========== MEAL PLAN GENERATOR ========== */
+function renderPlan(){
+  renderWeeklyInsights();
+  if(state.currentPlan){displayPlan(state.currentPlan);}
+}
+async function generatePlan(){
+  if(!state.apiKey){
+    document.getElementById('plan-content').innerHTML=`<div class="status-msg error">${t('noApiKey')}</div>`;
+    return;
+  }
+  if(!state.profile){return;}
+  const btn=document.getElementById('plan-gen-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner" style="width:14px;height:14px;border-width:1.5px;vertical-align:middle;"></span> '+(lang==='no'?'Genererer…':'Generating…');
+  const g=state.profile.goals;
+  const favs=getFavorites().slice(0,6).map(f=>f.name).join(', ');
+  const favsHint=favs?`\nBrukeren spiser ofte: ${favs}. Inkluder gjerne noen av disse i planen.`:'';
+  const prompt=lang==='no'
+    ?`Lag en daglig matplan for en person med disse målene:\n- ${g.cal} kcal/dag\n- ${g.p}g protein\n- ${g.c}g karbohydrater\n- ${g.f}g fett\nMål: ${state.profile.goal||'lean_bulk'}${favsHint}\n\nLag 4 måltider: frokost, lunsj, middag, snack.\nSvar KUN med gyldig JSON array, ingen annen tekst:\n[{"meal":"Frokost","name":"string","portion_g":number,"cal":number,"protein_g":number,"carbs_g":number,"fat_g":number},...]`
+    :`Create a daily meal plan for these goals:\n- ${g.cal} kcal/day\n- ${g.p}g protein\n- ${g.c}g carbs\n- ${g.f}g fat\nGoal: ${state.profile.goal||'lean_bulk'}${favsHint}\n\nMake 4 meals: breakfast, lunch, dinner, snack.\nRespond ONLY with valid JSON array, no other text:\n[{"meal":"Breakfast","name":"string","portion_g":number,"cal":number,"protein_g":number,"carbs_g":number,"fat_g":number},...]`;
+  try{
+    const resp=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+state.apiKey},body:JSON.stringify({model:'gpt-4o-mini',max_tokens:600,messages:[{role:'user',content:prompt}]})});
+    if(!resp.ok)throw new Error('API error '+resp.status);
+    const data=await resp.json();
+    let text=data.choices[0].message.content.trim();
+    text=text.replace(/```json\s*/g,'').replace(/```/g,'').trim();
+    const plan=JSON.parse(text);
+    state.currentPlan=plan;save();
+    displayPlan(plan);
+  }catch(err){
+    document.getElementById('plan-content').innerHTML=`<div class="status-msg error">${esc(err.message)}</div>`;
+  }
+  btn.disabled=false;btn.innerHTML='✨ '+(lang==='no'?'Generer ny plan':'Generate new plan');
+}
+function displayPlan(plan){
+  if(!plan||!plan.length){document.getElementById('plan-content').innerHTML=`<div class="empty">${lang==='no'?'Ingen plan generert ennå':'No plan generated yet'}</div>`;return;}
+  let totalCal=0,totalP=0,totalC=0,totalF=0;
+  plan.forEach(m=>{totalCal+=m.cal||0;totalP+=m.protein_g||0;totalC+=m.carbs_g||0;totalF+=m.fat_g||0;});
+  const g=state.profile?state.profile.goals:{cal:2000,p:150,c:250,f:70};
+  let html=plan.map((m,i)=>`<div class="food-item" style="cursor:pointer;" onclick="logPlanMeal(${i})">
+    <div style="flex:1;">
+      <div style="font-size:11px;color:#C8A97E;font-weight:500;text-transform:uppercase;letter-spacing:0.5px;">${esc(m.meal)}</div>
+      <div class="food-name" style="margin-top:2px;">${esc(m.name)}</div>
+      <div class="food-meta">${m.portion_g||100}g · ${Math.round(m.cal)} kcal</div>
+      <div class="macro-pills">
+        <span class="pill pill-p">P ${Math.round(m.protein_g)}g</span>
+        <span class="pill pill-c">C ${Math.round(m.carbs_g)}g</span>
+        <span class="pill pill-f">F ${Math.round(m.fat_g)}g</span>
+      </div>
+    </div>
+    <div style="font-size:11px;color:#C8A97E;">+ ${lang==='no'?'Logg':'Log'}</div>
+  </div>`).join('');
+  html+=`<div style="margin-top:12px;padding:10px;background:#1C1916;border-radius:8px;">
+    <div style="font-size:12px;color:#7A6F62;margin-bottom:4px;">${lang==='no'?'Totalt i planen':'Plan total'}</div>
+    <div style="display:flex;gap:12px;font-size:13px;">
+      <span style="color:#E8E0D4;">${Math.round(totalCal)} kcal</span>
+      <span class="pill pill-p">P ${Math.round(totalP)}g</span>
+      <span class="pill pill-c">C ${Math.round(totalC)}g</span>
+      <span class="pill pill-f">F ${Math.round(totalF)}g</span>
+    </div>
+    <div style="font-size:11px;color:#5C5347;margin-top:4px;">${lang==='no'?'Mål':'Target'}: ${g.cal} kcal · P${g.p}g · C${g.c}g · F${g.f}g</div>
+  </div>`;
+  html+=`<button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="logAllPlanMeals()">📋 ${lang==='no'?'Logg hele planen':'Log entire plan'}</button>`;
+  document.getElementById('plan-content').innerHTML=html;
+}
+function logPlanMeal(i){
+  if(!state.currentPlan||!state.currentPlan[i])return;
+  const m=state.currentPlan[i];
+  getDay(viewingDate).meals.push({name:m.name,portion:m.portion_g||100,cal:m.cal||0,p:m.protein_g||0,c:m.carbs_g||0,f:m.fat_g||0,qty:1,time:Date.now()});
+  save();
+  const el=document.querySelectorAll('#plan-content .food-item')[i];
+  if(el){el.style.opacity='0.4';el.style.pointerEvents='none';el.querySelector('div[style*=\"color:#C8A97E\"]').textContent='✓ '+(lang==='no'?'Logget':'Logged');}
+}
+function logAllPlanMeals(){
+  if(!state.currentPlan)return;
+  state.currentPlan.forEach(m=>{
+    getDay(viewingDate).meals.push({name:m.name,portion:m.portion_g||100,cal:m.cal||0,p:m.protein_g||0,c:m.carbs_g||0,f:m.fat_g||0,qty:1,time:Date.now()});
+  });
+  save();render();
+  switchView('home');
+}
+
+/* ========== WEEKLY INSIGHTS ========== */
+function renderWeeklyInsights(){
+  const wrap=document.getElementById('weekly-insights');
+  if(!state.profile)return;
+  const g=state.profile.goals;
+  let daysLogged=0,totalCal=0,totalP=0,totalC=0,totalF=0,lowProtDays=0,overCalDays=0;
+  for(let i=0;i<7;i++){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const k=d.toISOString().slice(0,10);
+    const day=state.days[k];
+    if(!day||!day.meals||day.meals.length===0)continue;
+    daysLogged++;
+    let dc=0,dp=0,dca=0,df=0;
+    day.meals.forEach(m=>{const q=m.qty||1;dc+=m.cal*q;dp+=m.p*q;dca+=m.c*q;df+=m.f*q;});
+    totalCal+=dc;totalP+=dp;totalC+=dca;totalF+=df;
+    if(dp<g.p*0.8)lowProtDays++;
+    if(dc>g.cal*1.15)overCalDays++;
+  }
+  if(daysLogged<2){wrap.innerHTML=`<div class="empty">${lang==='no'?'Logg mat i noen dager for å se innsikt her':'Log food for a few days to see insights'}</div>`;return;}
+  const avgCal=Math.round(totalCal/daysLogged);
+  const avgP=Math.round(totalP/daysLogged);
+  const insights=[];
+  if(lowProtDays>=3){
+    insights.push({emoji:'🥩',text:lang==='no'?`Du har fått for lite protein ${lowProtDays} av ${daysLogged} dager. Prøv å legge til mer kylling, egg eller skyr.`:`You've been low on protein ${lowProtDays} of ${daysLogged} days. Try adding more chicken, eggs, or greek yogurt.`});
+  }
+  if(overCalDays>=3){
+    insights.push({emoji:'📊',text:lang==='no'?`Du har gått over kalori-målet ${overCalDays} av ${daysLogged} dager. Vurder litt mindre porsjoner.`:`You've exceeded your calorie goal ${overCalDays} of ${daysLogged} days. Consider slightly smaller portions.`});
+  }
+  if(avgP>=g.p*0.9&&lowProtDays<=1){
+    insights.push({emoji:'💪',text:lang==='no'?'Bra jobba med proteinet! Du treffer målet nesten hver dag.':'Great protein intake! You\'re hitting your target almost every day.'});
+  }
+  if(avgCal>=g.cal*0.85&&avgCal<=g.cal*1.1){
+    insights.push({emoji:'🎯',text:lang==='no'?`Snitt ${avgCal} kcal/dag — veldig nærme målet ditt på ${g.cal}. Fortsett sånn!`:`Average ${avgCal} kcal/day — very close to your ${g.cal} target. Keep it up!`});
+  }
+  const streak=calcStreak();
+  if(streak>=7){
+    insights.push({emoji:'🔥',text:lang==='no'?`${streak} dager streak! Imponerende konsistens.`:`${streak} day streak! Impressive consistency.`});
+  }
+  if(insights.length===0){
+    insights.push({emoji:'📈',text:lang==='no'?`Siste ${daysLogged} dager: snitt ${avgCal} kcal og ${avgP}g protein per dag.`:`Last ${daysLogged} days: average ${avgCal} kcal and ${avgP}g protein per day.`});
+  }
+  wrap.innerHTML=insights.map(i=>`<div style="display:flex;gap:10px;padding:8px 0;border-bottom:0.5px solid #2E2822;"><span style="font-size:20px;">${i.emoji}</span><span style="font-size:13px;color:#E8E0D4;line-height:1.5;">${i.text}</span></div>`).join('');
+}
+
 checkAuth();
 </script>
 </body>
