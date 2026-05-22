@@ -19,7 +19,7 @@
   .tabbar { display: flex; gap: 4px; background: #1C1916; border-radius: 8px; padding: 4px; margin-bottom: 12px; position: sticky; top: 0; z-index: 10; }
   .tab { flex: 1; padding: 10px 4px; text-align: center; font-size: 13px; border-radius: 6px; cursor: pointer; color: #7A6F62; }
   .tab.active { background: #241F1B; color: #E8E0D4; font-weight: 500; }
-  .btn { padding: 10px 14px; border-radius: 8px; border: 0.5px solid #3A332C; background: #241F1B; font-size: 14px; cursor: pointer; color: #E8E0D4; font-family: inherit; }
+  .btn { padding: 10px 14px; border-radius: 10px; border: 0.5px solid #3A332C; background: #241F1B; font-size: 14px; cursor: pointer; color: #E8E0D4; font-family: inherit; }
   .btn-primary { background: #C8A97E; color: #1C1916; border: none; font-weight: 500; }
   .btn-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
   .input { width: 100%; padding: 10px 12px; border: 0.5px solid rgba(0,0,0,0.15); border-radius: 6px; background: #241F1B; color: #E8E0D4; font-size: 14px; font-family: inherit; }
@@ -44,8 +44,8 @@
   .glass { width: 30px; height: 38px; border: 1.5px solid #3A332C; border-radius: 0 0 6px 6px; border-top: none; cursor: pointer; }
   .glass.filled { background: rgba(200,169,126,0.15); border-color: #C8A97E; }
   .lang-toggle { display: flex; gap: 4px; margin-bottom: 12px; justify-content: flex-end; }
-  .lang-btn { padding: 4px 10px; font-size: 12px; border-radius: 4px; border: 0.5px solid rgba(0,0,0,0.15); background: transparent; cursor: pointer; color: #7A6F62; font-family: inherit; }
-  .lang-btn.active { background: #1a1a1a; color: #fff; border-color: #E8E0D4; }
+  .lang-btn { padding: 4px 10px; font-size: 12px; border-radius: 4px; border: 0.5px solid #3A332C; background: transparent; cursor: pointer; color: #7A6F62; font-family: inherit; }
+  .lang-btn.active { background: #C8A97E; color: #1C1916; border-color: #C8A97E; }
   .confidence { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-left: 8px; }
   .empty { text-align: center; color: #5C5347; font-size: 13px; padding: 24px 0; }
   h2 { font-size: 20px; font-weight: 500; margin: 0 0 12px; }
@@ -100,29 +100,11 @@
   .fav-item:hover { background: #2A2520; margin: 0 -8px; padding: 8px; border-radius: 6px; border-bottom-color: transparent; }
   .fav-item:last-child { border-bottom: none; }
   .qty-controls { display: flex; align-items: center; gap: 0; margin-right: 4px; }
-  .qty-btn { width: 26px; height: 26px; border-radius: 50%; border: 0.5px solid rgba(0,0,0,0.15); background: #1C1916; font-size: 16px; cursor: pointer; color: #E8E0D4; display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1; }
+  .qty-btn { width: 26px; height: 26px; border-radius: 50%; border: 0.5px solid #3A332C; background: #2A2520; font-size: 16px; cursor: pointer; color: #7A6F62; display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1; }
   .qty-num { font-size: 14px; font-weight: 500; min-width: 24px; text-align: center; }
 
-    .metric, .tabbar, .progress-bar { background: #0f0f0f; }
-    .tab { color: #999; } .tab.active { background: #1a1a1a; color: #f0f0f0; }
-    .input { background: #1a1a1a; color: #f0f0f0; border-color: rgba(255,255,255,0.15); }
-    .btn { color: #f0f0f0; border-color: rgba(255,255,255,0.2); }
     
-    .modal { background: #1a1a1a; }
-    .food-item { border-bottom-color: rgba(255,255,255,0.08); }
-    .lang-btn { color: #999; border-color: rgba(255,255,255,0.15); }
-    .lang-btn.active { background: #C8A97E; color: #1C1916; }
-    .label, .food-meta, .metric-label { color: #999; }
-    .empty, .delete, .metric-sub { color: #777; }
-    .api-setup { background: #2a2210; } .api-setup p { color: #FAC775; }
-    .day-nav-btn { color: #999; } .day-nav-btn:hover { background: #222; }
-    .day-nav-sub { color: #999; }
-    .search-result:hover { background: #222; }
-    .search-results-box { border-color: rgba(255,255,255,0.1); }
-    .qty-btn { background: #222; color: #f0f0f0; border-color: rgba(255,255,255,0.15); }
-    .streak-badge.locked { background: #222; color: #555; }
-    .fav-item:hover { background: rgba(255,255,255,0.03); }
-  }
+      }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
