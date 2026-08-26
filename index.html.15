@@ -759,10 +759,10 @@ function displayPlan(plan){
   let totalCal=0,totalP=0,totalC=0,totalF=0;
   plan.forEach(m=>{totalCal+=m.cal||0;totalP+=m.protein_g||0;totalC+=m.carbs_g||0;totalF+=m.fat_g||0;});
   const g=state.profile?state.profile.goals:{cal:2000,p:150,c:250,f:70};
-  let html=plan.map((m,i)=>`<div class="food-item" style="cursor:pointer;" onclick="logPlanMeal(${i})">
-    <div style="flex:1;">
+  let html=plan.map((m,i)=>`<div style="border-bottom:0.5px solid #2E2822;padding:12px 0;">
+    <div style="cursor:pointer;" onclick="openMealDetail(${i})">
       <div style="font-size:11px;color:#C8A97E;font-weight:500;text-transform:uppercase;letter-spacing:0.5px;">${esc(m.meal)}</div>
-      <div class="food-name" style="margin-top:2px;">${esc(m.name)}</div>
+      <div class="food-name" style="margin-top:2px;">${esc(m.name)} <span style="font-size:11px;color:#7A6F62;">▸ ${lang==='no'?'Se oppskrift':'See recipe'}</span></div>
       <div class="food-meta">${m.portion_g||100}g · ${Math.round(m.cal)} kcal</div>
       <div class="macro-pills">
         <span class="pill pill-p">P ${Math.round(m.protein_g)}g</span>
@@ -770,7 +770,7 @@ function displayPlan(plan){
         <span class="pill pill-f">F ${Math.round(m.fat_g)}g</span>
       </div>
     </div>
-    <div style="font-size:11px;color:#C8A97E;">+ ${lang==='no'?'Logg':'Log'}</div>
+    <button class="btn btn-primary" style="width:100%;margin-top:8px;padding:8px;font-size:13px;" id="plan-log-${i}" onclick="logPlanMeal(${i})">+ ${lang==='no'?'Legg til i dagloggen':'Add to daily log'}</button>
   </div>`).join('');
   const matchColor=(actual,target)=>{const pct=actual/target;return pct>=0.9&&pct<=1.1?'#B8D4A8':pct>=0.8&&pct<=1.2?'#E8C87A':'#D4A89C';};
   html+=`<div style="margin-top:12px;padding:10px;background:#1C1916;border-radius:8px;">
@@ -785,13 +785,73 @@ function displayPlan(plan){
   html+=`<button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="logAllPlanMeals()">📋 ${lang==='no'?'Logg hele planen':'Log entire plan'}</button>`;
   document.getElementById('plan-content').innerHTML=html;
 }
+async function openMealDetail(i){
+  if(!state.currentPlan||!state.currentPlan[i])return;
+  const m=state.currentPlan[i];
+  const mealName=m.name;
+  modal(`<h3>${esc(m.meal)}</h3>
+    <div style="font-size:18px;font-weight:500;margin-bottom:4px;">${esc(mealName)}</div>
+    <div class="food-meta">${m.portion_g||100}g · ${Math.round(m.cal)} kcal</div>
+    <div class="macro-pills" style="margin-bottom:16px;">
+      <span class="pill pill-p">P ${Math.round(m.protein_g)}g</span>
+      <span class="pill pill-c">C ${Math.round(m.carbs_g)}g</span>
+      <span class="pill pill-f">F ${Math.round(m.fat_g)}g</span>
+    </div>
+    <div id="meal-detail-content" style="text-align:center;padding:20px 0;"><div class="spinner"></div><div class="status-msg" style="margin-top:8px;">${lang==='no'?'Henter oppskrift og video…':'Fetching recipe and video…'}</div></div>
+    <div class="row" style="margin-top:12px;">
+      <button class="btn" style="flex:1;" onclick="closeModal()">${t('cancel')}</button>
+      <button class="btn btn-primary" style="flex:1;" onclick="closeModal();logPlanMeal(${i})">+ ${lang==='no'?'Legg til i dagloggen':'Add to log'}</button>
+    </div>`);
+  await fetchMealDetail(mealName, m.portion_g||100);
+}
+async function fetchMealDetail(mealName, portionG){
+  const detailDiv=document.getElementById('meal-detail-content');
+  if(!detailDiv)return;
+  if(state.apiKey){
+    try{
+      const prompt=lang==='no'
+        ?`Gi meg en oppskrift for "${mealName}" (total porsjon ca ${portionG}g).\n\nSvar KUN med gyldig JSON:\n{"ingredients":[{"item":"ingrediensnavn","grams":number}],"steps":["steg 1","steg 2","steg 3"],"prep_minutes":number,"search_query":"best search term for finding this recipe video on youtube"}`
+        :`Give me a recipe for "${mealName}" (total portion ~${portionG}g).\n\nRespond ONLY with valid JSON:\n{"ingredients":[{"item":"ingredient name","grams":number}],"steps":["step 1","step 2","step 3"],"prep_minutes":number,"search_query":"best search term for finding this recipe video on youtube"}`;
+      const resp=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+state.apiKey},body:JSON.stringify({model:'gpt-4o-mini',max_tokens:500,messages:[{role:'user',content:prompt}]})});
+      if(!resp.ok)throw new Error('API error');
+      const data=await resp.json();
+      let text=data.choices[0].message.content.trim();
+      text=text.replace(/```json\s*/g,'').replace(/```/g,'').trim();
+      const r=JSON.parse(text);
+      const ytQuery=encodeURIComponent(r.search_query||mealName+' recipe');
+      let html=`<div style="text-align:left;">`;
+      html+=`<div style="font-size:13px;font-weight:500;color:#C8A97E;margin-bottom:8px;">🥘 ${lang==='no'?'Ingredienser':'Ingredients'}</div>`;
+      html+=r.ingredients.map(ing=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:0.5px solid #2E2822;font-size:13px;"><span>${esc(ing.item)}</span><span style="color:#C8A97E;font-weight:500;">${ing.grams}g</span></div>`).join('');
+      html+=`<div style="font-size:13px;font-weight:500;color:#C8A97E;margin:16px 0 8px;">👨‍🍳 ${lang==='no'?'Fremgangsmåte':'Steps'} <span style="font-weight:400;color:#7A6F62;">(~${r.prep_minutes||15} min)</span></div>`;
+      html+=r.steps.map((s,j)=>`<div style="display:flex;gap:8px;padding:6px 0;font-size:13px;line-height:1.5;"><span style="color:#C8A97E;font-weight:500;min-width:20px;">${j+1}.</span><span>${esc(s)}</span></div>`).join('');
+      html+=`<div style="margin-top:16px;">
+        <div style="font-size:13px;font-weight:500;color:#C8A97E;margin-bottom:8px;">🎬 ${lang==='no'?'Se video':'Watch video'}</div>
+        <a href="https://www.youtube.com/results?search_query=${ytQuery}" target="_blank" rel="noopener" style="display:block;padding:10px;background:#1C1916;border-radius:8px;text-decoration:none;color:#E8E0D4;font-size:13px;">▶️ ${lang==='no'?'Søk på YouTube':'Search on YouTube'}</a>
+        <a href="https://www.tiktok.com/search?q=${ytQuery}" target="_blank" rel="noopener" style="display:block;padding:10px;background:#1C1916;border-radius:8px;text-decoration:none;color:#E8E0D4;font-size:13px;margin-top:6px;">🎵 ${lang==='no'?'Søk på TikTok':'Search on TikTok'}</a>
+      </div>`;
+      html+=`</div>`;
+      detailDiv.innerHTML=html;
+    }catch(err){
+      detailDiv.innerHTML=`<div class="status-msg error">${esc(err.message)}</div>`;
+    }
+  } else {
+    const ytQuery=encodeURIComponent(mealName+' recipe');
+    detailDiv.innerHTML=`<div style="text-align:left;">
+      <div class="status-msg">${lang==='no'?'Legg inn OpenAI API-nøkkel under Profil for å se ingredienser og fremgangsmåte.':'Add OpenAI API key under Profile to see ingredients and instructions.'}</div>
+      <div style="margin-top:12px;">
+        <a href="https://www.youtube.com/results?search_query=${ytQuery}" target="_blank" rel="noopener" style="display:block;padding:10px;background:#1C1916;border-radius:8px;text-decoration:none;color:#E8E0D4;font-size:13px;">▶️ ${lang==='no'?'Søk på YouTube':'Search on YouTube'}</a>
+        <a href="https://www.tiktok.com/search?q=${ytQuery}" target="_blank" rel="noopener" style="display:block;padding:10px;background:#1C1916;border-radius:8px;text-decoration:none;color:#E8E0D4;font-size:13px;margin-top:6px;">🎵 ${lang==='no'?'Søk på TikTok':'Search on TikTok'}</a>
+      </div>
+    </div>`;
+  }
+}
 function logPlanMeal(i){
   if(!state.currentPlan||!state.currentPlan[i])return;
   const m=state.currentPlan[i];
   getDay(viewingDate).meals.push({name:m.name,portion:m.portion_g||100,cal:m.cal||0,p:m.protein_g||0,c:m.carbs_g||0,f:m.fat_g||0,qty:1,time:Date.now()});
   save();
-  const el=document.querySelectorAll('#plan-content .food-item')[i];
-  if(el){el.style.opacity='0.4';el.style.pointerEvents='none';el.querySelector('div[style*=\"color:#C8A97E\"]').textContent='✓ '+(lang==='no'?'Logget':'Logged');}
+  const btn=document.getElementById('plan-log-'+i);
+  if(btn){btn.disabled=true;btn.textContent='✓ '+(lang==='no'?'Lagt til i dagloggen':'Added to daily log');btn.style.opacity='0.5';}
 }
 function logAllPlanMeals(){
   if(!state.currentPlan)return;
